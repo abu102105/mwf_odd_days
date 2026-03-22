@@ -521,6 +521,11 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--tx);min-he
         Barcha o'quvchilar
         <span class="t-nav-badge" id="studentsBadge">0</span>
       </div>
+      <div class="t-nav-sec">Kuzatuv</div>
+      <div class="t-nav-item" id="navLive" onclick="showTeacherPage('live')" style="color:rgba(255,255,255,.9);">
+        <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        📡 Jonli Progress
+      </div>
     </nav>
     <div class="t-sb-foot">
       <button class="t-logout-btn" onclick="doLogout()">🚪 Chiqish</button>
@@ -946,7 +951,7 @@ function updateNavBadges(){
 
 function showTeacherPage(page){
   document.querySelectorAll('.t-nav-item').forEach(n=>n.classList.remove('active'));
-  const navMap = {dashboard:'navDash', groups:'navGroups', students:'navStudents'};
+  const navMap = {dashboard:'navDash', groups:'navGroups', students:'navStudents', live:'navLive'};
   const el = document.getElementById(navMap[page]);
   if(el) el.classList.add('active');
   
@@ -955,6 +960,78 @@ function showTeacherPage(page){
   if(page==='dashboard') renderDashboard(main);
   else if(page==='groups') renderGroupsPage(main);
   else if(page==='students') renderStudentsPage(main);
+  else if(page==='live') renderLivePage(main);
+}
+
+// ── LIVE PROGRESS — Google Sheets dan o'qish ──
+async function renderLivePage(main){
+  main.innerHTML = `<div class="t-page-title">📡 Jonli Progress</div>
+    <div class="t-page-sub">Google Sheets dan real vaqtda yuklanmoqda...</div>
+    <div style="text-align:center;padding:40px;color:var(--mt);">
+      <div style="font-size:32px;margin-bottom:12px;">⏳</div>Yuklanmoqda...
+    </div>`;
+
+  try {
+    const url = SHEETS_URL + '?action=read';
+    const res = await fetch(url);
+    const text = await res.text();
+    const rows = JSON.parse(text);
+
+    if(!rows || rows.length === 0){
+      main.innerHTML = `<div class="t-page-title">📡 Jonli Progress</div>
+        <div class="t-empty"><div class="t-empty-ico">📊</div>
+        <div class="t-empty-title">Hali ma'lumot yo'q</div>
+        <div class="t-empty-sub">O'quvchilar dars tugatganda bu yerda ko'rinadi</div></div>`;
+      return;
+    }
+
+    // O'quvchilar bo'yicha guruhlash
+    const byStudent = {};
+    rows.forEach(r => {
+      if(!r.student) return;
+      if(!byStudent[r.student]) byStudent[r.student] = {lessons:[], lastPts:0, lastDone:'', lastTime:''};
+      byStudent[r.student].lessons.push(r);
+      byStudent[r.student].lastPts = r.pts;
+      byStudent[r.student].lastDone = r.totalDone;
+      byStudent[r.student].lastTime = r.time;
+    });
+
+    const cards = Object.entries(byStudent).map(([name, data])=>{
+      const count = data.lessons.length;
+      const lastLesson = data.lessons[data.lessons.length-1];
+      return `
+        <div style="background:#fff;border-radius:var(--radius);border:1px solid var(--bd);padding:16px 20px;margin-bottom:12px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+            <div style="display:flex;align-items:center;gap:10px;">
+              <div class="t-student-av">${name.charAt(0).toUpperCase()}</div>
+              <div>
+                <div style="font-size:14px;font-weight:800;color:var(--tx);">${escHtml(name)}</div>
+                <div style="font-size:11px;color:var(--mt);">Oxirgi faollik: ${escHtml(data.lastTime)}</div>
+              </div>
+            </div>
+            <div style="text-align:right;">
+              <div class="t-student-pts">⭐ ${escHtml(String(data.lastPts))} pts</div>
+              <div style="font-size:11px;color:var(--mt);margin-top:4px;">${escHtml(data.lastDone)} dars</div>
+            </div>
+          </div>
+          <div style="font-size:12px;font-weight:700;color:var(--mt);margin-bottom:6px;">Bajarilgan darslar (${count} ta):</div>
+          <div style="display:flex;flex-wrap:wrap;gap:4px;">
+            ${data.lessons.map(l=>`<span style="background:var(--tl2);color:var(--tl);padding:2px 8px;border-radius:5px;font-size:11px;font-weight:700;">${escHtml(l.lesson)}</span>`).join('')}
+          </div>
+        </div>`;
+    }).join('');
+
+    main.innerHTML = `
+      <div class="t-page-title">📡 Jonli Progress</div>
+      <div class="t-page-sub">${rows.length} ta dars bajarildi · <button class="t-btn t-btn-secondary t-btn-sm" onclick="renderLivePage(document.getElementById('teacherMain'))">🔄 Yangilash</button></div>
+      ${cards}
+    `;
+  } catch(err) {
+    main.innerHTML = `<div class="t-page-title">📡 Jonli Progress</div>
+      <div class="t-empty"><div class="t-empty-ico">❌</div>
+      <div class="t-empty-title">Ulanishda xato</div>
+      <div class="t-empty-sub">${err.message}</div></div>`;
+  }
 }
 
 function renderDashboard(main){
@@ -1353,7 +1430,7 @@ function initStudentWorkbook(user){
 // GOOGLE SHEETS SYNC
 // Bu yerga Google Apps Script Web App URL ini qo'ying:
 // ═══════════════════════════════════════════════════════════
-const SHEETS_URL = "https://script.google.com/macros/s/AKfycbz_fA2h3zszVtlHaZwMSoj4AcQ1dTO6fTVtrt0Pfyhrjjh31EBaJjY1F4sul_6KoHih/exec"; // https://script.google.com/macros/s/XXXX/exec
+const SHEETS_URL = "https://script.google.com/macros/s/AKfycbxg5-_JXhM_UfYTVauawBZdWM6ZinWmByavGdWlNXRq0Z4v8YhnbDsMz0rJBN0SvHiJ/exec"; // https://script.google.com/macros/s/XXXX/exec
 
 function sendToSheets(data){
   if(!SHEETS_URL || SHEETS_URL.includes('SHU_YERNI')) return; // URL qo'yilmagan
