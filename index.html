@@ -643,6 +643,17 @@ html,body{
       <input class="form-input" id="loginPass" type="password" placeholder="••••••" autocomplete="current-password">
     </div>
     <button class="login-btn" onclick="doLogin()">Kirish →</button>
+    <div style="text-align:center;margin-top:14px;">
+      <button onclick="toggleSetupCode()" style="background:none;border:none;color:var(--mt);font-size:12px;font-family:'Nunito',sans-serif;cursor:pointer;text-decoration:underline;">
+        📋 Setup kodi bormi? Shu yerga kiriting
+      </button>
+    </div>
+    <div id="setupCodePanel" style="display:none;margin-top:12px;border-top:1px solid var(--bd);padding-top:14px;">
+      <div class="form-label" style="margin-bottom:6px;display:block;">Setup kodini joylashtiring:</div>
+      <textarea id="setupCodeInput" style="width:100%;min-height:80px;padding:10px;border:2px solid var(--bd);border-radius:8px;font-size:12px;font-family:'JetBrains Mono',monospace;resize:vertical;outline:none;" placeholder="Ustoz bergan kodni bu yerga joylashtiring..."></textarea>
+      <button onclick="applySetupCode()" style="width:100%;margin-top:8px;padding:10px;background:var(--bl);color:#fff;border:none;border-radius:8px;font-family:'Nunito',sans-serif;font-size:14px;font-weight:700;cursor:pointer;">Kodni qo'llash</button>
+      <div id="setupCodeMsg" style="margin-top:8px;font-size:12px;text-align:center;"></div>
+    </div>
   </div>
 </div>
 
@@ -1078,11 +1089,31 @@ function chkAll(){
 // AUTH & DATA SYSTEM
 // ═══════════════════════════════════════════════════════════
 
+// ═══════════════════════════════════════════════════════════
+// GITHUB GIST CONFIG (teacher sets this once in Settings)
+// ═══════════════════════════════════════════════════════════
+let GH = (()=>{
+  try{
+    const saved = JSON.parse(localStorage.getItem('rmap_github')||'{}');
+    // Default values — agar localStorage bo'sh bo'lsa
+    if(!saved.gistId) saved.gistId = '12edbbc6ce294c7612964d4efe12b835';
+    if(!saved.token)  saved.token  = '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';
+    return saved;
+  }catch{ return {gistId:'12edbbc6ce294c7612964d4efe12b835', token:'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'}; }
+})();
+
+function saveGH(){ localStorage.setItem('rmap_github', JSON.stringify(GH)); }
+
+// ═══════════════════════════════════════════════════════════
+// AUTH & DATA SYSTEM
+// localStorage = tezkor cache, GitHub Gist = haqiqiy backend
+// ═══════════════════════════════════════════════════════════
+
 const DB = {
   getUsers(){ try{return JSON.parse(localStorage.getItem('rmap_users')||'[]');}catch{return [];} },
-  saveUsers(u){ localStorage.setItem('rmap_users', JSON.stringify(u)); },
+  saveUsers(u){ localStorage.setItem('rmap_users', JSON.stringify(u)); DB._pushGist(); },
   getGroups(){ try{return JSON.parse(localStorage.getItem('rmap_groups')||'[]');}catch{return [];} },
-  saveGroups(g){ localStorage.setItem('rmap_groups', JSON.stringify(g)); },
+  saveGroups(g){ localStorage.setItem('rmap_groups', JSON.stringify(g)); DB._pushGist(); },
   getProgress(uid){ 
     try{
       const d = JSON.parse(localStorage.getItem(`rmap_prog_${uid}`)||'{"done":[],"pts":0}');
@@ -1095,10 +1126,62 @@ const DB = {
       done: [...prog.done],
       pts: prog.pts
     }));
+    // Progress Google Sheetsga ketadi (addScore ichida), Gistga shart emas
   },
   getSession(){ try{return JSON.parse(localStorage.getItem('rmap_session')||'null');}catch{return null;} },
   saveSession(s){ localStorage.setItem('rmap_session', JSON.stringify(s)); },
-  clearSession(){ localStorage.removeItem('rmap_session'); }
+  clearSession(){ localStorage.removeItem('rmap_session'); },
+
+  // GitHub Gist → localStorage (pull)
+  async pullGist(){
+    if(!GH.gistId) return false;
+    try{
+      const headers = {'Accept':'application/vnd.github.v3+json'};
+      if(GH.token) headers['Authorization'] = 'token '+GH.token;
+      const r = await fetch(`https://api.github.com/gists/${GH.gistId}`, {headers});
+      if(!r.ok) return false;
+      const data = await r.json();
+      const content = data.files && data.files['roadmap_data.json'] && data.files['roadmap_data.json'].content;
+      if(!content) return false;
+      const parsed = JSON.parse(content);
+      if(parsed.users) localStorage.setItem('rmap_users', JSON.stringify(parsed.users));
+      if(parsed.groups) localStorage.setItem('rmap_groups', JSON.stringify(parsed.groups));
+      return true;
+    }catch(e){ console.warn('Gist pull failed:', e); return false; }
+  },
+
+  // localStorage → GitHub Gist (push)
+  _pushTimer: null,
+  _pushGist(){
+    // Debounce: 1 soniya ichida bir marta
+    clearTimeout(DB._pushTimer);
+    DB._pushTimer = setTimeout(DB._doGistPush, 1000);
+  },
+  async _doGistPush(){
+    if(!GH.gistId || !GH.token) return;
+    try{
+      const payload = {
+        files: {
+          'roadmap_data.json': {
+            content: JSON.stringify({
+              users: DB.getUsers(),
+              groups: DB.getGroups(),
+              updated: new Date().toISOString()
+            }, null, 2)
+          }
+        }
+      };
+      await fetch(`https://api.github.com/gists/${GH.gistId}`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': 'token '+GH.token,
+          'Content-Type': 'application/json',
+          'Accept': 'application/vnd.github.v3+json'
+        },
+        body: JSON.stringify(payload)
+      });
+    }catch(e){ console.warn('Gist push failed:', e); }
+  }
 };
 
 // Init default teacher if no users exist
@@ -1242,6 +1325,44 @@ function renderSettingsPage(main){
       </div>
     </div>
 
+    <!-- GitHub Gist sozlamasi -->
+    <div style="background:#fff;border-radius:var(--radius-lg);border:1px solid var(--bd);overflow:hidden;margin-bottom:20px;">
+      <div style="padding:14px 20px;background:var(--bg);border-bottom:1px solid var(--bd);">
+        <span style="font-size:14px;font-weight:800;color:var(--tx);">🔗 GitHub Gist sinxronizatsiyasi</span>
+      </div>
+      <div style="padding:20px;">
+        <div style="font-size:13px;color:var(--mt);margin-bottom:16px;padding:10px 14px;background:var(--bl3);border-radius:8px;border:1px solid rgba(37,99,235,.15);">
+          <strong>Qanday sozlanadi:</strong><br>
+          1. <a href="https://gist.github.com" target="_blank" style="color:var(--bl2);">gist.github.com</a> ga kiring → yangi Gist yarating (nom: <code>roadmap_data.json</code>, mazmun: <code>{}</code>)<br>
+          2. <a href="https://github.com/settings/tokens" target="_blank" style="color:var(--bl2);">github.com/settings/tokens</a> → "Gist" huquqi bilan token yarating<br>
+          3. Gist URL dagi ID ni (masalan: <code>abc123...def</code>) va tokenni quyida kiriting
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;">
+          <div class="form-group" style="margin:0;">
+            <label class="form-label">Gist ID</label>
+            <input class="form-input" id="ghGistId" value="${escHtml(GH.gistId||'')}" placeholder="abc123def456...">
+          </div>
+          <div class="form-group" style="margin:0;">
+            <label class="form-label">GitHub Token (ghp_...)</label>
+            <input class="form-input" id="ghToken" type="password" value="${escHtml(GH.token||'')}" placeholder="ghp_xxxxxxxxxxxx">
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+          <button class="t-btn t-btn-primary" onclick="saveGithubConfig()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+            Saqlash
+          </button>
+          <button class="t-btn t-btn-secondary" onclick="testGistSync()">
+            🔄 Sinxronlashni tekshirish
+          </button>
+          <button class="t-btn t-btn-secondary" onclick="pushToGistNow()">
+            ⬆️ Hozir yuklash
+          </button>
+        </div>
+        <div id="ghSyncMsg" style="margin-top:10px;font-size:13px;font-weight:600;"></div>
+      </div>
+    </div>
+
     <!-- Tizim ma'lumotlari -->
     <div style="background:#fff;border-radius:var(--radius-lg);border:1px solid var(--bd);overflow:hidden;margin-bottom:20px;">
       <div style="padding:14px 20px;background:var(--bg);border-bottom:1px solid var(--bd);">
@@ -1266,6 +1387,27 @@ function renderSettingsPage(main){
           <div style="font-size:12px;color:var(--mt);margin-top:2px;">Barcha o'quvchilar, guruhlar va progresslar o'chadi. Bu amalni qaytarib bo'lmaydi!</div>
         </div>
         <button class="t-btn t-btn-danger" onclick="resetAllData()" style="flex-shrink:0;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg> Hammani o'chirish</button>
+      </div>
+    </div>
+
+    <!-- Setup kodi -->
+    <div style="background:#fff;border-radius:var(--radius-lg);border:1px solid var(--bd);overflow:hidden;margin-top:20px;">
+      <div style="padding:14px 20px;background:var(--bg);border-bottom:1px solid var(--bd);">
+        <span style="font-size:14px;font-weight:800;color:var(--tx);">📋 O'quvchilar uchun Setup kodi</span>
+      </div>
+      <div style="padding:20px;">
+        <div style="font-size:13px;color:var(--mt);margin-bottom:14px;">
+          O'quvchilar boshqa qurilmada (telefon, kompyuter) ochganida ularning akkauntlari bo'lmaydi. 
+          Quyidagi <strong>Setup kodi</strong>ni o'quvchilarga yuboring — ular login sahifasida "Setup kodi" tugmasini bosib, kodni joylashtiradi va kirishi mumkin bo'ladi.
+        </div>
+        <button class="t-btn t-btn-primary" onclick="generateSetupCode()" style="margin-bottom:12px;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+          Setup kodini yaratish
+        </button>
+        <div id="setupCodeResult" style="display:none;">
+          <textarea id="setupCodeText" readonly style="width:100%;min-height:100px;padding:10px;border:2px solid var(--bl2);border-radius:8px;font-size:11px;font-family:'JetBrains Mono',monospace;background:var(--bl3);color:var(--bl);resize:vertical;cursor:pointer;" onclick="this.select();document.execCommand('copy');showNotif('Kod nusxalandi!');" title="Bosing — nusxalanadi"></textarea>
+          <div style="font-size:11px;color:var(--mt);margin-top:6px;">👆 Matn ustiga bosing — avtomatik nusxalanadi. Telegram/WhatsApp orqali o'quvchilarga yuboring.</div>
+        </div>
       </div>
     </div>
   `;
@@ -1811,6 +1953,75 @@ function showNotif(msg){
 
 function escHtml(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
+function generateSetupCode(){
+  const students = DB.getUsers().filter(u=>u.role==='student');
+  if(!students.length){ showNotif("Hali o'quvchi qo'shilmagan!"); return; }
+  const code = btoa(unescape(encodeURIComponent(JSON.stringify(students))));
+  const el = document.getElementById('setupCodeResult');
+  const ta = document.getElementById('setupCodeText');
+  if(el && ta){ el.style.display='block'; ta.value=code; ta.select(); }
+  showNotif('Setup kodi tayyor! Bosing — nusxalanadi.');
+}
+
+function toggleSetupCode(){
+  const panel = document.getElementById('setupCodePanel');
+  if(panel) panel.style.display = panel.style.display==='none' ? 'block' : 'none';
+}
+
+function applySetupCode(){
+  const code = (document.getElementById('setupCodeInput')||{}).value||'';
+  const msg = document.getElementById('setupCodeMsg');
+  try {
+    const students = JSON.parse(decodeURIComponent(escape(atob(code.trim()))));
+    if(!Array.isArray(students) || !students.length) throw new Error('Bo\'sh');
+    let users = DB.getUsers();
+    let added = 0;
+    students.forEach(s=>{
+      if(!users.find(u=>u.username===s.username)){
+        users.push(s);
+        added++;
+      }
+    });
+    DB.saveUsers(users);
+    if(msg){ msg.style.color='var(--tl)'; msg.textContent = `✓ ${added} ta akkaunt qo'shildi! Endi login qiling.`; }
+    if(added > 0) showNotif && showNotif(`${added} ta akkaunt qo'shildi!`);
+  } catch(e) {
+    if(msg){ msg.style.color='var(--rd)'; msg.textContent = '✗ Noto\'g\'ri kod. Qayta tekshiring.'; }
+  }
+}
+
+function saveGithubConfig(){
+  const gistId = (document.getElementById('ghGistId')||{}).value||'';
+  const token = (document.getElementById('ghToken')||{}).value||'';
+  GH.gistId = gistId.trim();
+  GH.token = token.trim();
+  saveGH();
+  const msg = document.getElementById('ghSyncMsg');
+  if(msg){ msg.style.color='var(--tl)'; msg.textContent='✓ Saqlandi!'; setTimeout(()=>msg.textContent='',2500); }
+  showNotif('GitHub sozlamalari saqlandi');
+}
+
+async function testGistSync(){
+  const msg = document.getElementById('ghSyncMsg');
+  if(!GH.gistId){ if(msg){msg.style.color='var(--rd)';msg.textContent='✗ Gist ID kiritmagan!';} return; }
+  if(msg){ msg.style.color='var(--mt)'; msg.textContent='⏳ Tekshirilmoqda...'; }
+  const ok = await DB.pullGist();
+  if(msg){
+    if(ok){ msg.style.color='var(--tl)'; msg.textContent='✓ Ulanish muvaffaqiyatli! Ma\'lumotlar yangilandi.'; }
+    else { msg.style.color='var(--rd)'; msg.textContent='✗ Ulanmadi. Gist ID va token to\'g\'riligini tekshiring.'; }
+  }
+}
+
+async function pushToGistNow(){
+  const msg = document.getElementById('ghSyncMsg');
+  if(!GH.gistId||!GH.token){ if(msg){msg.style.color='var(--rd)';msg.textContent='✗ Gist ID va Token kerak!';} return; }
+  if(msg){ msg.style.color='var(--mt)'; msg.textContent='⏳ Yuklanmoqda...'; }
+  await DB._doGistPush();
+  if(msg){ msg.style.color='var(--tl)'; msg.textContent='✓ GitHub Gistga yuklandi!'; setTimeout(()=>msg.textContent='',3000); }
+}
+
+function saveGithubConfigAndTest(){ saveGithubConfig(); testGistSync(); }
+
 function tBotActive(id){
   document.querySelectorAll('.t-bn-item').forEach(b=>b.classList.remove('active'));
   const el=document.getElementById(id);
@@ -1845,7 +2056,7 @@ function initStudentWorkbook(user){
 // GOOGLE SHEETS SYNC
 // Bu yerga Google Apps Script Web App URL ini qo'ying:
 // ═══════════════════════════════════════════════════════════
-const SHEETS_URL = "https://script.google.com/macros/s/AKfycbxSQRH_colMA0U4Q68KZ4Q8JCo2BaWPPnDHLuzKokm7T0nxnaN-kXL0vE7bV0cvyh6j/exec"; // https://script.google.com/macros/s/XXXX/exec
+const SHEETS_URL = "https://script.google.com/macros/s/AKfycbzBpg1fdmxy0QsM54QePAHCP05_h1Xui3syDXKRmogcXJiAonYiRJgAXDlrYi-s8iiW/exec"; // https://script.google.com/macros/s/XXXX/exec
 
 function sendToSheets(data){
   if(!SHEETS_URL) return;
@@ -1902,21 +2113,36 @@ function openSB(){document.getElementById('sb').classList.add('open');document.g
 function closeSB(){document.getElementById('sb').classList.remove('open');document.getElementById('ov').classList.remove('show');}
 
 // ═══════════════════════════════════════════════════════════
-// INIT
+// INIT — Avval GitHub Gistdan sinxronlaymiz, keyin ishlaymiz
 // ═══════════════════════════════════════════════════════════
-initDefaultData();
+async function initApp(){
+  initDefaultData();
 
-const session = DB.getSession();
-if(session){
-  // Verify session still valid
-  const users = DB.getUsers();
-  const found = users.find(u=>u.id===session.id);
-  if(found){
-    startApp(found);
-  } else {
-    DB.clearSession();
+  // Gist mavjud bo'lsa — eng yangi ma'lumotlarni yuklaymiz
+  if(GH.gistId){
+    const loginBtn = document.querySelector('.login-btn');
+    const loginSub = document.querySelector('.login-sub');
+    if(loginSub) loginSub.textContent = '⏳ Ma\'lumotlar yuklanmoqda...';
+    if(loginBtn) loginBtn.disabled = true;
+    await DB.pullGist();
+    initDefaultData(); // re-check after pull
+    if(loginSub) loginSub.textContent = 'O\'qituvchi yoki o\'quvchi sifatida kiring';
+    if(loginBtn) loginBtn.disabled = false;
+  }
+
+  const session = DB.getSession();
+  if(session){
+    const users = DB.getUsers();
+    const found = users.find(u=>u.id===session.id);
+    if(found){
+      startApp(found);
+    } else {
+      DB.clearSession();
+    }
   }
 }
+
+initApp();
 </script>
 
 
