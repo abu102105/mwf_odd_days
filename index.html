@@ -526,6 +526,11 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--tx);min-he
         <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
         📡 Jonli Progress
       </div>
+      <div class="t-nav-sec">Tizim</div>
+      <div class="t-nav-item" id="navSettings" onclick="showTeacherPage('settings')">
+        <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+        Sozlamalar
+      </div>
     </nav>
     <div class="t-sb-foot">
       <button class="t-logout-btn" onclick="doLogout()">🚪 Chiqish</button>
@@ -951,7 +956,7 @@ function updateNavBadges(){
 
 function showTeacherPage(page){
   document.querySelectorAll('.t-nav-item').forEach(n=>n.classList.remove('active'));
-  const navMap = {dashboard:'navDash', groups:'navGroups', students:'navStudents', live:'navLive'};
+  const navMap = {dashboard:'navDash', groups:'navGroups', students:'navStudents', live:'navLive', settings:'navSettings'};
   const el = document.getElementById(navMap[page]);
   if(el) el.classList.add('active');
   
@@ -961,76 +966,276 @@ function showTeacherPage(page){
   else if(page==='groups') renderGroupsPage(main);
   else if(page==='students') renderStudentsPage(main);
   else if(page==='live') renderLivePage(main);
+  else if(page==='settings') renderSettingsPage(main);
+}
+
+// ── SOZLAMALAR SAHIFASI ──
+function renderSettingsPage(main){
+  const users = DB.getUsers();
+  const teacher = users.find(u=>u.role==='teacher') || {};
+  const stuCount = users.filter(u=>u.role==='student').length;
+  const grpCount = DB.getGroups().length;
+  const totalLessons = UNITS.reduce((a,u)=>a+u.lessons.length,0);
+
+  main.innerHTML = `
+    <div class="t-page-title">⚙️ Sozlamalar</div>
+    <div class="t-page-sub">O'qituvchi profili va tizim sozlamalari</div>
+
+    <!-- Profil kartasi -->
+    <div style="background:#fff;border-radius:var(--radius-lg);border:1px solid var(--bd);overflow:hidden;margin-bottom:20px;">
+      <div style="padding:14px 20px;background:var(--bg);border-bottom:1px solid var(--bd);">
+        <span style="font-size:14px;font-weight:800;color:var(--tx);">👤 Profil ma'lumotlari</span>
+      </div>
+      <div style="padding:24px;">
+        <div style="display:flex;align-items:center;gap:18px;margin-bottom:24px;">
+          <div style="width:64px;height:64px;border-radius:16px;background:linear-gradient(135deg,var(--or),var(--or2));display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:800;color:#fff;flex-shrink:0;" id="settingsAv">
+            ${(teacher.name||teacher.username||'T').charAt(0).toUpperCase()}
+          </div>
+          <div>
+            <div style="font-size:18px;font-weight:800;color:var(--tx);" id="settingsName">${escHtml(teacher.name||teacher.username||'Oquvitchi')}</div>
+            <div style="font-size:13px;color:var(--mt);">@${escHtml(teacher.username||'teacher')} · O'qituvchi</div>
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px;">
+          <div class="form-group" style="margin:0;">
+            <label class="form-label">To'liq ism-familiya</label>
+            <input class="form-input" id="settNameInput" value="${escHtml(teacher.name||'')}" placeholder="Masalan: Abubakr Rashidov">
+          </div>
+          <div class="form-group" style="margin:0;">
+            <label class="form-label">Login (o'zgarmaydi)</label>
+            <input class="form-input" value="${escHtml(teacher.username||'teacher')}" disabled style="opacity:.6;cursor:not-allowed;">
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px;">
+          <div class="form-group" style="margin:0;">
+            <label class="form-label">Yangi parol (bosh qoldirsangiz ozgarmaydi)</label>
+            <input class="form-input" id="settPassInput" type="password" placeholder="Yangi parol kiriting">
+          </div>
+          <div class="form-group" style="margin:0;">
+            <label class="form-label">Parolni tasdiqlang</label>
+            <input class="form-input" id="settPassConfirm" type="password" placeholder="Parolni qayta kiriting">
+          </div>
+        </div>
+
+        <div style="display:flex;gap:10px;">
+          <button class="t-btn t-btn-primary" onclick="saveTeacherProfile()">💾 Saqlash</button>
+          <button class="t-btn t-btn-secondary" onclick="showTeacherPage('dashboard')">Bekor qilish</button>
+        </div>
+        <div id="settNotif" style="margin-top:12px;padding:10px 14px;border-radius:8px;font-size:13px;font-weight:700;display:none;"></div>
+      </div>
+    </div>
+
+    <!-- Tizim ma'lumotlari -->
+    <div style="background:#fff;border-radius:var(--radius-lg);border:1px solid var(--bd);overflow:hidden;margin-bottom:20px;">
+      <div style="padding:14px 20px;background:var(--bg);border-bottom:1px solid var(--bd);">
+        <span style="font-size:14px;font-weight:800;color:var(--tx);">📊 Tizim ma'lumotlari</span>
+      </div>
+      <div style="padding:20px;display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;">
+        <div class="t-stat"><div class="t-stat-num">${stuCount}</div><div class="t-stat-lbl">Jami o'quvchilar</div></div>
+        <div class="t-stat"><div class="t-stat-num">${grpCount}</div><div class="t-stat-lbl">Guruhlar</div></div>
+        <div class="t-stat"><div class="t-stat-num">${UNITS.length}</div><div class="t-stat-lbl">Units</div></div>
+        <div class="t-stat"><div class="t-stat-num">${totalLessons}</div><div class="t-stat-lbl">Jami darslar</div></div>
+      </div>
+    </div>
+
+    <!-- Xavfli zona -->
+    <div style="background:#fff;border-radius:var(--radius-lg);border:1.5px solid var(--rd2);overflow:hidden;">
+      <div style="padding:14px 20px;background:var(--rd2);border-bottom:1px solid rgba(220,38,38,.15);">
+        <span style="font-size:14px;font-weight:800;color:var(--rd);">⚠️ Xavfli zona</span>
+      </div>
+      <div style="padding:20px;display:flex;align-items:center;justify-content:space-between;gap:16px;">
+        <div>
+          <div style="font-size:14px;font-weight:700;color:var(--tx);">Barcha ma'lumotlarni o'chirish</div>
+          <div style="font-size:12px;color:var(--mt);margin-top:2px;">Barcha o'quvchilar, guruhlar va progresslar o'chadi. Bu amalni qaytarib bo'lmaydi!</div>
+        </div>
+        <button class="t-btn t-btn-danger" onclick="resetAllData()" style="flex-shrink:0;">🗑️ Hammani o'chirish</button>
+      </div>
+    </div>
+  `;
+}
+
+function saveTeacherProfile(){
+  const name = document.getElementById('settNameInput').value.trim();
+  const pass = document.getElementById('settPassInput').value.trim();
+  const conf = document.getElementById('settPassConfirm').value.trim();
+  const notif = document.getElementById('settNotif');
+
+  if(!name){ showSettNotif("Ism-familiya kiriting!", "error"); return; }
+  if(pass && pass !== conf){ showSettNotif("Parollar mos kelmadi!", "error"); return; }
+  if(pass && pass.length < 4){ showSettNotif("Parol kamida 4 ta belgi bolsin!", "error"); return; }
+
+  let users = DB.getUsers();
+  const idx = users.findIndex(u=>u.role==='teacher');
+  if(idx === -1){ showSettNotif("Xato: oquvitchi topilmadi!", "error"); return; }
+
+  users[idx].name = name;
+  if(pass) users[idx].password = pass;
+  DB.saveUsers(users);
+
+  // Sessiyani ham yangilaymiz
+  const session = DB.getSession();
+  if(session){ session.name = name; if(pass) session.password = pass; DB.saveSession(session); }
+
+  // UI ni yangilaymiz
+  document.getElementById('tUserName').textContent = name;
+  document.getElementById('tUserAv').textContent = name.charAt(0).toUpperCase();
+  document.getElementById('settingsAv').textContent = name.charAt(0).toUpperCase();
+  document.getElementById('settingsName').textContent = name;
+  document.getElementById('settPassInput').value = '';
+  document.getElementById('settPassConfirm').value = '';
+
+  showSettNotif("Profil muvaffaqiyatli saqlandi!", "success");
+}
+
+function showSettNotif(msg, type){
+  const el = document.getElementById('settNotif');
+  if(!el) return;
+  el.textContent = msg;
+  el.style.display = 'block';
+  el.style.background = type==='success' ? 'var(--tl2)' : 'var(--rd2)';
+  el.style.color = type==='success' ? 'var(--tl)' : 'var(--rd)';
+  setTimeout(()=>{ el.style.display='none'; }, 3500);
+}
+
+function resetAllData(){
+  if(!confirm('DIQQAT! Barcha oquvchilar va guruhlar ochadi!')) return;
+  // Faqat o'quvchilar va guruhlarni o'chiramiz, ustozni saqlaymiz
+  const teacher = DB.getUsers().find(u=>u.role==='teacher');
+  DB.saveUsers(teacher ? [teacher] : []);
+  DB.saveGroups([]);
+  // Progress larni o'chirish
+  const keys = Object.keys(localStorage).filter(k=>k.startsWith('rmap_prog_'));
+  keys.forEach(k=>localStorage.removeItem(k));
+  showNotif("Barcha malumotlar ochirildi");
+  showTeacherPage('dashboard');
+}
+
+// ── JSONP helper (CORS muammosini hal qiladi) ──
+function fetchJSONP(url){
+  return new Promise((resolve, reject) => {
+    const cbName = 'cb_' + Date.now() + '_' + Math.random().toString(36).slice(2);
+    window[cbName] = function(data){
+      resolve(data);
+      delete window[cbName];
+      document.getElementById(cbName) && document.getElementById(cbName).remove();
+    };
+    const script = document.createElement('script');
+    script.id = cbName;
+    // callback parametrini qo'shamiz
+    script.src = url.replace(/cb=cb[12]/, 'callback=' + cbName);
+    script.onerror = () => { reject(new Error('Script load failed')); delete window[cbName]; };
+    document.head.appendChild(script);
+    setTimeout(() => { reject(new Error('Timeout')); delete window[cbName]; }, 10000);
+  });
 }
 
 // ── LIVE PROGRESS — Google Sheets dan o'qish ──
+let liveView = 'summary'; // 'summary' yoki 'detail'
+
 async function renderLivePage(main){
-  main.innerHTML = `<div class="t-page-title">📡 Jonli Progress</div>
+  main.innerHTML = `
+    <div class="t-page-title">📡 Jonli Progress</div>
     <div class="t-page-sub">Google Sheets dan real vaqtda yuklanmoqda...</div>
-    <div style="text-align:center;padding:40px;color:var(--mt);">
-      <div style="font-size:32px;margin-bottom:12px;">⏳</div>Yuklanmoqda...
-    </div>`;
+    <div style="text-align:center;padding:40px;color:var(--mt);">⏳ Yuklanmoqda...</div>`;
 
   try {
-    const url = SHEETS_URL + '?action=read';
-    const res = await fetch(url);
-    const text = await res.text();
-    const rows = JSON.parse(text);
+    // JSONP orqali o'qish (CORS muammosini hal qiladi)
+    const [summary, details] = await Promise.all([
+      fetchJSONP(SHEETS_URL + '?action=read&view=summary&cb=cb1'),
+      fetchJSONP(SHEETS_URL + '?action=read&view=detail&cb=cb2')
+    ]);
 
-    if(!rows || rows.length === 0){
+    if(!summary || summary.length === 0){
       main.innerHTML = `<div class="t-page-title">📡 Jonli Progress</div>
         <div class="t-empty"><div class="t-empty-ico">📊</div>
         <div class="t-empty-title">Hali ma'lumot yo'q</div>
-        <div class="t-empty-sub">O'quvchilar dars tugatganda bu yerda ko'rinadi</div></div>`;
+        <div class="t-empty-sub">O'quvchilar topshiriq bajarganda bu yerda ko'rinadi</div></div>`;
       return;
     }
 
-    // O'quvchilar bo'yicha guruhlash
-    const byStudent = {};
-    rows.forEach(r => {
-      if(!r.student) return;
-      if(!byStudent[r.student]) byStudent[r.student] = {lessons:[], lastPts:0, lastDone:'', lastTime:''};
-      byStudent[r.student].lessons.push(r);
-      byStudent[r.student].lastPts = r.pts;
-      byStudent[r.student].lastDone = r.totalDone;
-      byStudent[r.student].lastTime = r.time;
-    });
+    // O'quvchi kartalar
+    const cards = summary.map(s => {
+      // Bu o'quvchining batafsil natijalari
+      const stuDetails = details.filter(d => d.student === s.student);
 
-    const cards = Object.entries(byStudent).map(([name, data])=>{
-      const count = data.lessons.length;
-      const lastLesson = data.lessons[data.lessons.length-1];
-      return `
-        <div style="background:#fff;border-radius:var(--radius);border:1px solid var(--bd);padding:16px 20px;margin-bottom:12px;">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-            <div style="display:flex;align-items:center;gap:10px;">
-              <div class="t-student-av">${name.charAt(0).toUpperCase()}</div>
-              <div>
-                <div style="font-size:14px;font-weight:800;color:var(--tx);">${escHtml(name)}</div>
-                <div style="font-size:11px;color:var(--mt);">Oxirgi faollik: ${escHtml(data.lastTime)}</div>
-              </div>
-            </div>
-            <div style="text-align:right;">
-              <div class="t-student-pts">⭐ ${escHtml(String(data.lastPts))} pts</div>
-              <div style="font-size:11px;color:var(--mt);margin-top:4px;">${escHtml(data.lastDone)} dars</div>
-            </div>
-          </div>
-          <div style="font-size:12px;font-weight:700;color:var(--mt);margin-bottom:6px;">Bajarilgan darslar (${count} ta):</div>
-          <div style="display:flex;flex-wrap:wrap;gap:4px;">
-            ${data.lessons.map(l=>`<span style="background:var(--tl2);color:var(--tl);padding:2px 8px;border-radius:5px;font-size:11px;font-weight:700;">${escHtml(l.lesson)}</span>`).join('')}
-          </div>
+      // Unitlar bo'yicha guruhlash
+      const byUnit = {};
+      stuDetails.forEach(d => {
+        if(!byUnit[d.unit]) byUnit[d.unit] = [];
+        byUnit[d.unit].push(d);
+      });
+
+      const unitRows = Object.entries(byUnit).map(([unit, exs]) => {
+        // Darslar bo'yicha guruhlash
+        const byLesson = {};
+        exs.forEach(ex => {
+          const key = ex.lesson + (ex.lessonTitle ? ': ' + ex.lessonTitle : '');
+          if(!byLesson[key]) byLesson[key] = [];
+          byLesson[key].push(ex);
+        });
+
+        const lessonRows = Object.entries(byLesson).map(([lesson, lexs]) => {
+          const exBadges = lexs.map(ex => {
+            const pct = parseInt(ex.percent)||0;
+            const bg = pct===100?'var(--tl2)':pct>=50?'var(--gd2)':'var(--rd2)';
+            const col = pct===100?'var(--tl)':pct>=50?'var(--gd)':'var(--rd)';
+            return `<span style="display:inline-block;padding:2px 8px;border-radius:5px;font-size:10px;font-weight:700;margin:2px;background:${bg};color:${col};">${escHtml(ex.exercise)}: ${pct}%</span>`;
+          }).join('');
+          return `<tr>
+            <td style="font-size:12px;font-weight:700;padding:6px 10px;color:var(--tx);">${escHtml(lesson)}</td>
+            <td style="padding:6px 10px;">${exBadges}</td>
+          </tr>`;
+        }).join('');
+
+        return `<div style="margin-bottom:8px;">
+          <div style="font-size:11px;font-weight:800;color:var(--bl);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;">${escHtml(unit)}</div>
+          <table style="width:100%;border-collapse:collapse;">${lessonRows}</table>
         </div>`;
+      }).join('');
+
+      // Umumiy foiz hisoblash
+      const allPcts = stuDetails.map(d=>parseInt(d.percent)||0);
+      const avgPct = allPcts.length ? Math.round(allPcts.reduce((a,b)=>a+b,0)/allPcts.length) : 0;
+
+      return `<div style="background:#fff;border-radius:var(--radius);border:1px solid var(--bd);margin-bottom:16px;overflow:hidden;">
+        <div style="padding:14px 18px;background:linear-gradient(135deg,#1A2F4A,#1e3a5f);display:flex;align-items:center;justify-content:space-between;">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div class="t-student-av">${escHtml(s.student).charAt(0).toUpperCase()}</div>
+            <div>
+              <div style="font-size:15px;font-weight:800;color:#fff;">${escHtml(s.student)}</div>
+              <div style="font-size:11px;color:rgba(255,255,255,.5);">Oxirgi: ${escHtml(s.lastTime)}</div>
+            </div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-size:22px;font-weight:800;color:var(--or);">⭐ ${escHtml(s.pts)}</div>
+            <div style="font-size:11px;color:rgba(255,255,255,.5);">${escHtml(s.totalDone)} dars · o'rtacha ${avgPct}%</div>
+          </div>
+        </div>
+        <div style="padding:14px 18px;">
+          ${stuDetails.length === 0
+            ? '<div style="color:var(--mt);font-size:13px;">Hali topshiriq bajarilmagan</div>'
+            : unitRows
+          }
+        </div>
+      </div>`;
     }).join('');
 
     main.innerHTML = `
       <div class="t-page-title">📡 Jonli Progress</div>
-      <div class="t-page-sub">${rows.length} ta dars bajarildi · <button class="t-btn t-btn-secondary t-btn-sm" onclick="renderLivePage(document.getElementById('teacherMain'))">🔄 Yangilash</button></div>
+      <div class="t-page-sub" style="display:flex;align-items:center;gap:10px;">
+        <span>${summary.length} o'quvchi · ${details.length} ta topshiriq natijasi</span>
+        <button class="t-btn t-btn-secondary t-btn-sm" onclick="renderLivePage(document.getElementById('teacherMain'))">🔄 Yangilash</button>
+      </div>
       ${cards}
     `;
   } catch(err) {
     main.innerHTML = `<div class="t-page-title">📡 Jonli Progress</div>
       <div class="t-empty"><div class="t-empty-ico">❌</div>
       <div class="t-empty-title">Ulanishda xato</div>
-      <div class="t-empty-sub">${err.message}</div></div>`;
+      <div class="t-empty-sub">${err.message}</div>
+      <div style="margin-top:8px;font-size:12px;color:var(--mt);">Apps Script yangi versiyani deploy qilinganmi?</div></div>`;
   }
 }
 
@@ -1430,19 +1635,12 @@ function initStudentWorkbook(user){
 // GOOGLE SHEETS SYNC
 // Bu yerga Google Apps Script Web App URL ini qo'ying:
 // ═══════════════════════════════════════════════════════════
-const SHEETS_URL = "https://script.google.com/macros/s/AKfycbxg5-_JXhM_UfYTVauawBZdWM6ZinWmByavGdWlNXRq0Z4v8YhnbDsMz0rJBN0SvHiJ/exec"; // https://script.google.com/macros/s/XXXX/exec
+const SHEETS_URL = "https://script.google.com/macros/s/AKfycbyJjm-vsWb82JdeTjVMjRIfclSAXPN1kbwcJCszMkhD9O49ciKqnG_eyYSipQqhAB0S/exec"; // https://script.google.com/macros/s/XXXX/exec
 
 function sendToSheets(data){
-  if(!SHEETS_URL || SHEETS_URL.includes('SHU_YERNI')) return; // URL qo'yilmagan
-  const url = SHEETS_URL + '?' + new URLSearchParams({
-    student: data.student,
-    unit: data.unit,
-    lesson: data.lesson,
-    pts: data.pts,
-    totalDone: data.totalDone,
-    time: new Date().toLocaleString('uz-UZ')
-  });
-  fetch(url, {mode:'no-cors'}).catch(()=>{}); // xatolarni jimgina o'tkazib yuborish
+  if(!SHEETS_URL || SHEETS_URL.includes('SHU_YERNI')) return;
+  const url = SHEETS_URL + '?' + new URLSearchParams(data);
+  fetch(url, {mode:'no-cors'}).catch(()=>{});
 }
 
 // Override addScore to also save to DB + Sheets
@@ -1457,19 +1655,29 @@ function addScore(k,c,t){
   if(ca)ca.prepend(rp);
   pts+=c;
   document.getElementById('sd').innerHTML='<span class="star-ico"><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></span> '+pts+' pts';
-  if(c===t&&CU&&CL){
-    done.add(`${CU.id}-${CL.id}`);
-    rSB();
-    // Dars tugatildi — Sheets ga yuborish
+  if(CU&&CL){
+    // Har bir topshiriq natijasini Sheets ga yuborish
     if(currentStudent){
+      const exIdx = k.split('-')[2];
+      const exNum = CL.exercises[exIdx] ? CL.exercises[exIdx].num : (parseInt(exIdx)+1);
       const totalLessons = UNITS.reduce((a,u)=>a+u.lessons.length,0);
       sendToSheets({
         student: currentStudent.name || currentStudent.username,
-        unit: `Unit ${CU.id}: ${CU.title}`,
+        unit: 'Unit ' + CU.id + ': ' + CU.title,
         lesson: CL.id,
-        pts: pts,
-        totalDone: `${done.size}/${totalLessons}`
+        lessonTitle: CL.title,
+        exercise: 'Ex ' + exNum,
+        correct: c,
+        total: t,
+        percent: p,
+        totalPts: pts,
+        totalDone: done.size + '/' + totalLessons,
+        time: new Date().toLocaleString('uz-UZ')
       });
+    }
+    if(c===t){
+      done.add(`${CU.id}-${CL.id}`);
+      rSB();
     }
   }
   // Save progress to DB (localStorage)
