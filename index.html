@@ -1613,7 +1613,7 @@ document.querySelectorAll('.modal-bg').forEach(m=>{
   m.addEventListener('click', e=>{ if(e.target===m) m.classList.remove('show'); });
 });
 
-function showNotif(msg){
+function showNotif(msg){ 
   const n = document.getElementById('notif');
   n.textContent = msg;
   n.classList.add('show');
