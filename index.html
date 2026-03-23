@@ -947,7 +947,16 @@ function rR(ex,k){
 }
 
 function rEC(ex,k){
-  return`<div class="ex" id="ex-${k}"><div class="exh"><div class="en">${ex.num}</div><div class="ei">${ex.instruction}</div></div><div class="exb"><div class="ec-text">${ex.text}</div><div style="font-size:12.5px;font-weight:600;color:var(--mt);margin-bottom:8px;">Find and correct the mistakes:</div>${ex.mistakes.map((m,i)=>`<div class="fi"><span class="fn">${i+1}</span><span class="ft" style="color:var(--rd);text-decoration:line-through;">${m.wrong}</span><span class="ft"> → </span><input class="finp" id="fi-${k}-${i}" placeholder="Correct form..." onchange="saF('${k}',${i},this.value)"></div>`).join('')}<div class="ca"><button class="btn btn-p" onclick="cF('${k}',${JSON.stringify(ex.answers)})">Check</button><button class="btn btn-g" onclick="showK('${k}')">Show Key</button></div><div class="ak" id="ak-${k}"><div class="akl">Answer Key</div>${ex.answers.map((a,i)=>`<div class="aki">${i+1}: <strong>${a}</strong></div>`).join('')}</div></div></div>`;
+  // Support two data formats:
+  // Format A: ex.mistakes=[{wrong,correct}] + ex.answers + ex.text  (old)
+  // Format B: ex.items=[{sentence,answer}]                           (new — 5B,6B,7D,9A,9C,10A,10B)
+  if(ex.mistakes){
+    return`<div class="ex" id="ex-${k}"><div class="exh"><div class="en">${ex.num}</div><div class="ei">${ex.instruction}</div></div><div class="exb"><div class="ec-text">${ex.text}</div><div style="font-size:12.5px;font-weight:600;color:var(--mt);margin-bottom:8px;">Find and correct the mistakes:</div>${ex.mistakes.map((m,i)=>`<div class="fi"><span class="fn">${i+1}</span><span class="ft" style="color:var(--rd);text-decoration:line-through;">${m.wrong}</span><span class="ft"> → </span><input class="finp" id="fi-${k}-${i}" placeholder="Correct form..." onchange="saF('${k}',${i},this.value)"></div>`).join('')}<div class="ca"><button class="btn btn-p" onclick="cF('${k}',${JSON.stringify(ex.answers)})">Check</button><button class="btn btn-g" onclick="showK('${k}')">Show Key</button></div><div class="ak" id="ak-${k}"><div class="akl">Answer Key</div>${ex.answers.map((a,i)=>`<div class="aki">${i+1}: <strong>${a}</strong></div>`).join('')}</div></div></div>`;
+  } else {
+    // Format B — each item is a full sentence; answer is the correction or "CORRECT"
+    const answers = ex.items.map(it=>it.answer);
+    return`<div class="ex" id="ex-${k}"><div class="exh"><div class="en">${ex.num}</div><div class="ei">${ex.instruction}</div></div><div class="exb">${ex.items.map((it,i)=>`<div class="fi" style="flex-wrap:wrap;gap:6px;"><span class="fn">${i+1}</span><span class="ft" style="flex:1;min-width:200px;">${it.sentence||''}</span><input class="finp" id="fi-${k}-${i}" placeholder="Correction or CORRECT" onchange="saF('${k}',${i},this.value)"></div>`).join('')}<div class="ca"><button class="btn btn-p" onclick="cF('${k}',${JSON.stringify(answers)})">Check</button><button class="btn btn-g" onclick="showK('${k}')">Show Key</button></div><div class="ak" id="ak-${k}"><div class="akl">Answer Key</div>${answers.map((a,i)=>`<div class="aki">${i+1}: <strong>${a}</strong></div>`).join('')}</div></div></div>`;
+  }
 }
 
 function esc(s){return String(s).replace(/[^a-z0-9]/gi,'_');}
@@ -1055,7 +1064,7 @@ function chkAll(){
   CL.exercises.forEach((ex,ei)=>{
     const k=`${CU.id}-${CL.id}-${ei}`;
     if(ex.type==='fill_bank'||ex.type==='fill_free')cF(k,ex.items.map(it=>it.answer));
-    else if(ex.type==='error_correction')cF(k,ex.answers);
+    else if(ex.type==='error_correction')cF(k,ex.answers||(ex.items&&ex.items.map(it=>it.answer))||[]);
     else if(ex.type==='reorder')cR(k,ex.items.map(it=>it.answer));
     else if(ex.type==='matching')cM(k,ex.answers,ex.left.length);
     else if(ex.type==='mcq')cQall(k,ei);
@@ -1331,155 +1340,106 @@ async function sheetsRead(view){
 let liveView = 'summary'; // 'summary' yoki 'detail'
 
 async function renderLivePage(main){
-  const svgChart='<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/><line x1="2" y1="20" x2="22" y2="20"/></svg>';
-  const svgErr='<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>';
-  const svgRefresh='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>';
-  const svgStar='<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>';
+  main.innerHTML = `
+    <div class="t-page-title">Jonli Progress</div>
+    <div class="t-page-sub">Google Sheets dan real vaqtda yuklanmoqda...</div>
+    <div style="text-align:center;padding:40px;color:var(--mt);">⏳ Yuklanmoqda...</div>`;
 
-  main.innerHTML=`<div class="t-page-title">Jonli Progress</div>
-    <div class="t-page-sub">Yuklanmoqda...</div>
-    <div style="display:flex;justify-content:center;padding:40px;">
-      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--mt)" stroke-width="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"><animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur=".8s" repeatCount="indefinite"/></path></svg>
-    </div>`;
+  try {
+    const [summary, details] = await Promise.all([
+      sheetsRead('summary'),
+      sheetsRead('detail')
+    ]);
 
-  function fmtTime(raw){
-    if(!raw) return '—';
-    try{
-      const d=new Date(raw);
-      if(isNaN(d)) return raw;
-      return d.toLocaleDateString('uz-UZ',{day:'2-digit',month:'2-digit',year:'numeric'})+' '+d.toLocaleTimeString('uz-UZ',{hour:'2-digit',minute:'2-digit'});
-    }catch{return raw;}
-  }
-
-  function statusColor(pct){
-    if(pct===100) return {bg:'var(--tl2)',col:'var(--tl)'};
-    if(pct>=70)   return {bg:'var(--bl3)',col:'var(--bl2)'};
-    if(pct>=40)   return {bg:'var(--gd2)',col:'var(--gd)'};
-    return          {bg:'var(--rd2)',col:'var(--rd)'};
-  }
-
-  try{
-    const [summary,details] = await Promise.all([sheetsRead('summary'),sheetsRead('detail')]);
-
-    if(!summary||summary.length===0){
-      main.innerHTML=`<div class="t-page-title">Jonli Progress</div>
-        <div class="t-empty"><div class="t-empty-ico">${svgChart}</div>
+    if(!summary || summary.length === 0){
+      main.innerHTML = `<div class="t-page-title">Jonli Progress</div>
+        <div class="t-empty"><div class="t-empty-ico"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/><line x1="2" y1="20" x2="22" y2="20"/></svg></div>
         <div class="t-empty-title">Hali ma'lumot yo'q</div>
         <div class="t-empty-sub">O'quvchilar topshiriq bajarganda bu yerda ko'rinadi</div></div>`;
       return;
     }
 
-    // Filter valid students only
-    const validSummary = summary.filter(s=>s.student && s.student!=='?');
+    // O'quvchi kartalar
+    const cards = summary.map(s => {
+      // Bu o'quvchining batafsil natijalari
+      const stuDetails = details.filter(d => d.student === s.student);
 
-    const cards = validSummary.map(s=>{
-      const stuDets = details.filter(d=>d.student===s.student);
-      const pts     = parseInt(s.pts)||0;
-      const status  = s.status||'';
-
-      // Group by unit → lesson
-      const byUnit={};
-      stuDets.forEach(d=>{
-        const u=d.unit||"Noma'lum";
-        if(!byUnit[u]) byUnit[u]=[];
-        byUnit[u].push(d);
+      // Unitlar bo'yicha guruhlash
+      const byUnit = {};
+      stuDetails.forEach(d => {
+        if(!byUnit[d.unit]) byUnit[d.unit] = [];
+        byUnit[d.unit].push(d);
       });
 
-      // Best/last exercises per lesson
-      const unitsHTML = Object.entries(byUnit).map(([uname,exs])=>{
-        const byLesson={};
-        exs.forEach(ex=>{
-          const k=ex.lessonTitle||ex.lesson||'—';
-          if(!byLesson[k]) byLesson[k]=[];
-          byLesson[k].push(ex);
+      const unitRows = Object.entries(byUnit).map(([unit, exs]) => {
+        // Darslar bo'yicha guruhlash
+        const byLesson = {};
+        exs.forEach(ex => {
+          const key = ex.lesson + (ex.lessonTitle ? ': ' + ex.lessonTitle : '');
+          if(!byLesson[key]) byLesson[key] = [];
+          byLesson[key].push(ex);
         });
 
-        const lessonCards = Object.entries(byLesson).map(([lname,lexs])=>{
-          // Best result per exercise num
-          const bestByEx={};
-          lexs.forEach(ex=>{
-            const k=ex.exercise;
-            const p=parseInt(ex.percent)||0;
-            if(!bestByEx[k]||p>parseInt(bestByEx[k].percent)) bestByEx[k]=ex;
-          });
-
-          const badges = Object.values(bestByEx).map(ex=>{
-            const p=parseInt(ex.percent)||0;
-            const {bg,col}=statusColor(p);
-            const icon = p===100
-              ? '<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>'
-              : '<svg width="8" height="8" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="5"/></svg>';
-            return `<span style="display:inline-flex;align-items:center;gap:3px;padding:3px 7px;border-radius:99px;font-size:10px;font-weight:700;background:${bg};color:${col};margin:2px;">${icon} ${escHtml(ex.exercise)} ${p}%</span>`;
+        const lessonRows = Object.entries(byLesson).map(([lesson, lexs]) => {
+          const exBadges = lexs.map(ex => {
+            const pct = parseInt(ex.percent)||0;
+            const bg = pct===100?'var(--tl2)':pct>=50?'var(--gd2)':'var(--rd2)';
+            const col = pct===100?'var(--tl)':pct>=50?'var(--gd)':'var(--rd)';
+            return `<span style="display:inline-block;padding:2px 8px;border-radius:5px;font-size:10px;font-weight:700;margin:2px;background:${bg};color:${col};">${escHtml(ex.exercise)}: ${pct}%</span>`;
           }).join('');
-
-          const avgPct = lexs.length ? Math.round(lexs.reduce((a,b)=>a+(parseInt(b.percent)||0),0)/lexs.length) : 0;
-          const {bg:lbg,col:lcol}=statusColor(avgPct);
-
-          return `<div style="margin-bottom:8px;padding:10px 12px;background:var(--bg);border-radius:8px;">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
-              <span style="font-size:12px;font-weight:700;color:var(--tx);">${escHtml(lname)}</span>
-              <span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:99px;background:${lbg};color:${lcol};">${avgPct}%</span>
-            </div>
-            <div style="display:flex;flex-wrap:wrap;gap:2px;">${badges}</div>
-          </div>`;
+          return `<tr>
+            <td style="font-size:12px;font-weight:700;padding:6px 10px;color:var(--tx);">${escHtml(lesson)}</td>
+            <td style="padding:6px 10px;">${exBadges}</td>
+          </tr>`;
         }).join('');
 
-        return `<div style="margin-bottom:12px;">
-          <div style="font-size:11px;font-weight:800;color:var(--bl2);text-transform:uppercase;letter-spacing:.08em;padding:4px 0 8px;border-bottom:1px solid var(--bd);margin-bottom:8px;">${escHtml(uname)}</div>
-          ${lessonCards}
+        return `<div style="margin-bottom:8px;">
+          <div style="font-size:11px;font-weight:800;color:var(--bl);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;">${escHtml(unit)}</div>
+          <table style="width:100%;border-collapse:collapse;">${lessonRows}</table>
         </div>`;
       }).join('');
 
-      const hasActivity = stuDets.length > 0;
-      const allPcts = stuDets.map(d=>parseInt(d.percent)||0);
-      const avgAll  = allPcts.length ? Math.round(allPcts.reduce((a,b)=>a+b,0)/allPcts.length) : 0;
-      const barW    = Math.min(100, avgAll);
-      const barCol  = avgAll===100?'var(--tl)':avgAll>=50?'var(--bl2)':'var(--or)';
-      const initials= s.student.split(' ').map(w=>w[0]||'').join('').toUpperCase().slice(0,2)||'?';
+      // Umumiy foiz hisoblash
+      const allPcts = stuDetails.map(d=>parseInt(d.percent)||0);
+      const avgPct = allPcts.length ? Math.round(allPcts.reduce((a,b)=>a+b,0)/allPcts.length) : 0;
 
-      return `<div style="background:#fff;border-radius:var(--radius);border:1px solid var(--bd);margin-bottom:14px;overflow:hidden;">
-        <!-- Student header -->
-        <div style="padding:14px 16px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--bd);">
-          <div style="width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,var(--bl),var(--bl2));display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#fff;flex-shrink:0;">${escHtml(initials)}</div>
-          <div style="flex:1;min-width:0;">
-            <div style="font-size:14px;font-weight:800;color:var(--tx);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escHtml(s.student)}</div>
-            <div style="font-size:11px;color:var(--mt);margin-top:1px;">${escHtml(s.totalDone)} dars · Oxirgi: ${fmtTime(s.lastTime)}</div>
-            <div style="height:4px;background:var(--bd);border-radius:99px;margin-top:5px;overflow:hidden;"><div style="height:100%;width:${barW}%;background:${barCol};border-radius:99px;transition:width .6s;"></div></div>
-          </div>
-          <div style="text-align:right;flex-shrink:0;">
-            <div style="display:flex;align-items:center;gap:3px;justify-content:flex-end;color:var(--or);font-weight:800;font-size:16px;">
-              <span style="color:var(--or);display:flex;">${svgStar}</span>${pts}
+      return `<div style="background:#fff;border-radius:var(--radius);border:1px solid var(--bd);margin-bottom:16px;overflow:hidden;">
+        <div style="padding:14px 18px;background:linear-gradient(135deg,#1A2F4A,#1e3a5f);display:flex;align-items:center;justify-content:space-between;">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div class="t-student-av">${escHtml(s.student).charAt(0).toUpperCase()}</div>
+            <div>
+              <div style="font-size:15px;font-weight:800;color:#fff;">${escHtml(s.student)}</div>
+              <div style="font-size:11px;color:rgba(255,255,255,.5);">Oxirgi: ${escHtml(s.lastTime)}</div>
             </div>
-            <div style="font-size:10px;color:var(--mt);font-weight:600;">ball</div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-size:22px;font-weight:800;color:var(--or);">⭐ ${escHtml(s.pts)}</div>
+            <div style="font-size:11px;color:rgba(255,255,255,.5);">${escHtml(s.totalDone)} dars · o'rtacha ${avgPct}%</div>
           </div>
         </div>
-        <!-- Activity detail (collapsible) -->
-        <details>
-          <summary style="padding:10px 16px;font-size:12px;font-weight:700;color:var(--bl2);cursor:pointer;list-style:none;display:flex;align-items:center;gap:6px;">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
-            ${hasActivity ? `${stuDets.length} ta topshiriq natijasi · o'rtacha ${avgAll}%` : 'Hali topshiriq bajarilmagan'}
-          </summary>
-          <div style="padding:0 16px 14px;">
-            ${hasActivity ? unitsHTML : `<div style="color:var(--mt);font-size:13px;padding:8px 0;">O'quvchi hali hech qanday topshiriq bajarmaganini ko'rsatmagan.</div>`}
-          </div>
-        </details>
+        <div style="padding:14px 18px;">
+          ${stuDetails.length === 0
+            ? '<div style="color:var(--mt);font-size:13px;">Hali topshiriq bajarilmagan</div>'
+            : unitRows
+          }
+        </div>
       </div>`;
     }).join('');
 
-    main.innerHTML=`
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
-        <div class="t-page-title" style="margin:0;">Jonli Progress</div>
-        <button class="t-btn t-btn-secondary t-btn-sm" onclick="renderLivePage(document.getElementById('teacherMain'))" style="display:flex;align-items:center;gap:5px;">${svgRefresh} Yangilash</button>
+    main.innerHTML = `
+      <div class="t-page-title">Jonli Progress</div>
+      <div class="t-page-sub" style="display:flex;align-items:center;gap:10px;">
+        <span>${summary.length} o'quvchi · ${details.length} ta topshiriq natijasi</span>
+        <button class="t-btn t-btn-secondary t-btn-sm" onclick="renderLivePage(document.getElementById('teacherMain'))">🔄 Yangilash</button>
       </div>
-      <div class="t-page-sub">${validSummary.length} ta o'quvchi · ${details.length} ta natija</div>
-      ${cards||'<div style="text-align:center;padding:24px;color:var(--mt);">Hali faol o\'quvchilar yo\'q</div>'}
+      ${cards}
     `;
-  }catch(err){
-    main.innerHTML=`<div class="t-page-title">Jonli Progress</div>
-      <div class="t-empty"><div class="t-empty-ico">${svgErr}</div>
+  } catch(err) {
+    main.innerHTML = `<div class="t-page-title">Jonli Progress</div>
+      <div class="t-empty"><div class="t-empty-ico"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg></div>
       <div class="t-empty-title">Ulanishda xato</div>
-      <div class="t-empty-sub">${escHtml(err.message)}</div>
-      <br><button class="t-btn t-btn-primary" onclick="renderLivePage(document.getElementById('teacherMain'))">Qayta urinish</button></div>`;
+      <div class="t-empty-sub">${err.message}</div>
+      <div style="margin-top:8px;font-size:12px;color:var(--mt);">Apps Script yangi versiyani deploy qilinganmi?</div></div>`;
   }
 }
 
