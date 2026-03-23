@@ -264,7 +264,7 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--tx);min-he
 .badge-pend{background:var(--bd);color:var(--mt);border-radius:99px;padding:3px 8px;font-size:11px;font-weight:700;}
 
 /* ── STUDENT WORKBOOK (original styles) ── */
-.workbook-wrap{display:flex;overflow-x:hidden;}
+.workbook-wrap{display:flex;overflow-x:hidden;min-height:100dvh;}
 .workbook-wrap .sb{
   width:var(--sb-w);min-width:var(--sb-w);
   background:linear-gradient(180deg,#1A2F4A 0%,#162540 100%);
@@ -312,7 +312,7 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--tx);min-he
 .sb-user-grp{font-size:10px;color:rgba(255,255,255,.4);}
 .sb-logout{background:none;border:none;cursor:pointer;color:rgba(255,100,80,.8);padding:4px;border-radius:5px;transition:color .15s;flex-shrink:0;}
 .sb-logout:hover{color:#ff6450;}
-.main{flex:1;min-width:0;display:flex;flex-direction:column;overflow-y:auto;}
+.main{flex:1;min-width:0;display:flex;flex-direction:column;overflow-y:auto;-webkit-overflow-scrolling:touch;}
 /* All the original main content styles */
 .tb{display:flex;align-items:center;gap:12px;padding:14px 20px;background:#fff;border-bottom:1px solid var(--bd);position:sticky;top:0;z-index:50;flex-wrap:wrap;}
 .bc{flex:1;font-size:14px;font-weight:700;color:var(--mt);}
@@ -417,7 +417,7 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--tx);min-he
 .mob-prog-fill{height:100%;background:linear-gradient(90deg,var(--or),var(--or2));border-radius:99px;transition:width .3s;}
 .mob-prog-txt{font-size:12px;font-weight:700;color:var(--mt);}
 /* Bottom Nav */
-.bot-nav{display:none;position:fixed;bottom:0;left:0;right:0;z-index:80;background:#fff;border-top:1px solid var(--bd);padding-bottom:env(safe-area-inset-bottom);}
+.bot-nav{display:none;position:fixed;bottom:0;left:0;right:0;z-index:80;background:#fff;border-top:1px solid var(--bd);padding-bottom:env(safe-area-inset-bottom);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);}
 .bot-nav-inner{display:flex;justify-content:space-around;}
 .bn-item{flex:1;display:flex;flex-direction:column;align-items:center;padding:8px 4px 6px;border:none;background:none;font-family:'Nunito',sans-serif;font-size:10px;font-weight:700;color:var(--mt);cursor:pointer;transition:color .15s;}
 .bn-item.active{color:var(--or);}
@@ -439,21 +439,110 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--tx);min-he
 .sl-sub{font-size:11px;color:var(--mt);}
 .sl-done{width:18px;color:transparent;}
 
-/* Responsive */
+/* ── BASE MOBILE FIXES ── */
+html,body{
+  -webkit-text-size-adjust:100%;
+  touch-action:manipulation;
+}
+
+/* ── RESPONSIVE ── */
 @media(max-width:760px){
-  .workbook-wrap .sb{position:fixed;left:0;top:0;transform:translateX(-100%);}
+
+  /* Sidebar — ekran tashqarisida yashirilgan */
+  .workbook-wrap .sb{
+    position:fixed;left:0;top:0;bottom:0;
+    transform:translateX(-110%);
+    z-index:200;
+    width:82vw !important;
+    min-width:unset !important;
+    max-width:320px;
+  }
   .workbook-wrap .sb.open{transform:translateX(0);}
+
+  /* Asosiy kontent — to'liq kenglik */
+  .workbook-wrap{display:block;}
+  .main{
+    width:100%;
+    min-height:100dvh;
+    overflow-y:visible;
+  }
+
+  /* Toolbar */
   .menu-btn{display:block;}
   .mob-prog{display:flex;}
   .tba{display:none;}
+
+  /* Bottom nav */
   .bot-nav{display:block;}
-  .ct{padding:14px;margin-bottom:60px;}
+  .ct{
+    padding:12px;
+    padding-bottom:80px;   /* bottom nav balandligi */
+  }
+
+  /* Exercises */
   .exb{padding-left:0;}
-  .mg{grid-template-columns:1fr;}
+  .ex{padding:14px 12px;border-radius:10px;}
+  .exh{gap:8px;margin-bottom:12px;}
+  .en{width:26px;height:26px;font-size:12px;border-radius:7px;}
+  .ei{font-size:13px;}
+
+  /* Matching — bitta ustun */
+  .mg{grid-template-columns:1fr;gap:6px;}
+  .mi{padding:10px 12px;font-size:13px;}
+
+  /* MCQ */
+  .qb{padding:11px 14px;font-size:13px;}
+  .qq{font-size:13px;}
+
+  /* Fill inputs */
+  .fi{gap:4px;}
+  .finp{min-width:90px;font-size:13px;padding:8px 10px;}
+  .ft{font-size:13px;}
+
+  /* Word bank */
+  .wb{padding:10px 12px;}
+  .wc{font-size:12px;padding:4px 9px;}
+
+  /* Reorder */
+  .rs{font-size:12.5px;}
+
+  /* Check buttons */
+  .btn{padding:9px 14px;font-size:12.5px;}
+  .ca{gap:8px;margin-top:12px;}
+
+  /* Answer key */
+  .ak{padding:10px 12px;}
+  .aki{font-size:12.5px;}
+
+  /* Lesson header */
+  .lh{padding:16px 14px;}
+  .ltl{font-size:17px;}
+  .lts{font-size:12px;}
+
+  /* Nav buttons */
+  .ln{padding:12px 0 20px;gap:8px;}
+  .bn{padding:9px 14px;font-size:12.5px;}
+
+  /* Overview cards */
   .sr2{grid-template-columns:1fr 1fr;}
-  .t-main{padding:16px;}
+  .ug{grid-template-columns:repeat(2,1fr);gap:10px;}
+  .uc{padding:12px;}
+
+  /* Teacher panel */
+  .t-main{padding:14px;}
   .t-sidebar{display:none;}
   .t-groups-grid{grid-template-columns:1fr;}
+  .t-stats{grid-template-columns:1fr 1fr;}
+
+  /* Login */
+  .login-card{padding:28px 20px;}
+}
+
+/* Kichik telefon (390px dan past) */
+@media(max-width:390px){
+  .ug{grid-template-columns:1fr;}
+  .sr2{grid-template-columns:1fr 1fr;}
+  .finp{min-width:70px;}
 }
 </style>
 </head>
@@ -1613,7 +1702,7 @@ document.querySelectorAll('.modal-bg').forEach(m=>{
   m.addEventListener('click', e=>{ if(e.target===m) m.classList.remove('show'); });
 });
 
-function showNotif(msg){ 
+function showNotif(msg){
   const n = document.getElementById('notif');
   n.textContent = msg;
   n.classList.add('show');
