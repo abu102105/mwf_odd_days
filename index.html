@@ -621,6 +621,50 @@ html,body{
 <body>
 
 
+<!-- API KEY SETUP SCREEN -->
+<div id="apiKeyScreen" class="login-wrap" style="display:none;">
+  <div class="login-card" style="max-width:480px;">
+    <div class="login-logo">
+      <div class="login-logo-i">☁️</div>
+      <div>
+        <div class="login-logo-t">Cloud Ulanish</div>
+        <div class="login-logo-s">Registan LC · Bir marta sozlash</div>
+      </div>
+    </div>
+    <div class="login-title" style="font-size:18px;">Backend sozlash</div>
+    <div class="login-sub" style="text-align:left;font-size:12px;line-height:1.7;margin-bottom:0;">
+      <strong>JSONBin.io</strong> — bepul, hech qanday server kerak emas.<br>
+      Bir marta sozlang — barcha qurilmalarda ishlaydi.
+    </div>
+    <div style="margin:14px 0;padding:12px;background:var(--bl3);border-radius:8px;font-size:12px;line-height:1.7;border:1px solid rgba(37,99,235,.15);">
+      <strong>📋 Qanday qilish:</strong><br>
+      1. <a href="https://jsonbin.io" target="_blank" style="color:var(--bl2);">jsonbin.io</a> ga kiring → Bepul ro'yxatdan o'ting<br>
+      2. Dashboard → API Keys → Master Key ni nusxalang<br>
+      3. Quyida kiriting → <strong>"Sozlashni boshlash"</strong> tugmasini bosing<br>
+      4. Avtomatik Bin ID yaratiladi — tayyor! ✅
+    </div>
+    <div id="apiKeyErr" class="login-err">Xato yuz berdi. API kalitni tekshiring.</div>
+    <div class="form-group">
+      <label class="form-label">JSONBin Master Key</label>
+      <input class="form-input" id="jsonBinKeyInput" type="password" placeholder="$2a$10$..." autocomplete="off" style="font-family:'JetBrains Mono',monospace;font-size:12px;">
+    </div>
+    <div class="form-group" id="binIdGroup" style="display:none;">
+      <label class="form-label">Bin ID (avtomatik yaratildi)</label>
+      <input class="form-input" id="jsonBinIdInput" style="font-family:'JetBrains Mono',monospace;font-size:12px;" readonly>
+    </div>
+    <div class="form-group" id="existingBinGroup">
+      <div style="font-size:11px;color:var(--mt);margin-bottom:4px;">Allaqachon Bin ID bor? (ixtiyoriy)</div>
+      <input class="form-input" id="jsonBinIdExisting" placeholder="64abc123..." style="font-family:'JetBrains Mono',monospace;font-size:12px;">
+    </div>
+    <button class="login-btn" id="apiKeySaveBtn" onclick="saveApiKeyAndContinue()">☁️ Sozlashni boshlash →</button>
+    <div style="margin-top:10px;text-align:center;">
+      <button onclick="skipCloudSetup()" style="background:none;border:none;color:var(--mt);font-size:12px;font-family:'Nunito',sans-serif;cursor:pointer;text-decoration:underline;">
+        Hozircha o'tkazib yuborish (faqat lokal rejim)
+      </button>
+    </div>
+  </div>
+</div>
+
 <!-- LOGIN SCREEN -->
 <div id="loginScreen" class="login-wrap">
   <div class="login-card">
@@ -632,7 +676,7 @@ html,body{
       </div>
     </div>
     <div class="login-title">Tizimga kirish</div>
-    <div class="login-sub">O'qituvchi yoki o'quvchi sifatida kiring</div>
+    <div class="login-sub" id="loginSubMsg">O'qituvchi yoki o'quvchi sifatida kiring</div>
     <div id="loginErr" class="login-err">Noto'g'ri foydalanuvchi nomi yoki parol</div>
     <div class="form-group">
       <label class="form-label">Foydalanuvchi nomi</label>
@@ -642,10 +686,13 @@ html,body{
       <label class="form-label">Parol</label>
       <input class="form-input" id="loginPass" type="password" placeholder="••••••" autocomplete="current-password">
     </div>
-    <button class="login-btn" onclick="doLogin()">Kirish →</button>
-    <div style="text-align:center;margin-top:14px;">
+    <button class="login-btn" id="loginBtn" onclick="doLogin()">Kirish →</button>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-top:10px;">
       <button onclick="toggleSetupCode()" style="background:none;border:none;color:var(--mt);font-size:12px;font-family:'Nunito',sans-serif;cursor:pointer;text-decoration:underline;">
-        📋 Setup kodi bormi? Shu yerga kiriting
+        📋 Setup kodi bormi?
+      </button>
+      <button onclick="showApiKeyScreen()" style="background:none;border:none;color:var(--mt);font-size:12px;font-family:'Nunito',sans-serif;cursor:pointer;text-decoration:underline;">
+        🔑 API kalitini o'zgartirish
       </button>
     </div>
     <div id="setupCodePanel" style="display:none;margin-top:12px;border-top:1px solid var(--bd);padding-top:14px;">
@@ -1092,97 +1139,185 @@ function chkAll(){
 // ═══════════════════════════════════════════════════════════
 // GITHUB GIST CONFIG (teacher sets this once in Settings)
 // ═══════════════════════════════════════════════════════════
-let GH = (()=>{
+// ═══════════════════════════════════════════════════════════
+// CLOUD BACKEND — JSONBin.io orqali haqiqiy sinxronizatsiya
+// Bepul, hech qanday server kerak emas.
+// Ustoz bir marta BIN ID va API KEY kiritadi — tamom.
+// ═══════════════════════════════════════════════════════════
+
+// ═══════════════════════════════════════════════════════════
+// CLOUD SOZLAMALARI — faqat apiKey ni kiriting!
+// jsonbin.io → bepul hisob → API Keys → Master Key
+// Bin ID avtomatik yaratiladi ✅
+// ═══════════════════════════════════════════════════════════
+const CLOUD_DEFAULT = {
+  apiKey: '$2a$10$k5dV.bNsl9ZLgZwqshr3Lu0plqK2OIEJTU9P6QbhkJ6LmygUPmVxS',
+  binId:  '69c21f2bb7ec241ddc990ed3'
+};
+
+function getCloudCfg(){
   try{
-    const saved = JSON.parse(localStorage.getItem('rmap_github')||'{}');
-    // Default values — agar localStorage bo'sh bo'lsa
-    if(!saved.gistId) saved.gistId = '12edbbc6ce294c7612964d4efe12b835';
-    if(!saved.token)  saved.token  = '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';
-    return saved;
-  }catch{ return {gistId:'12edbbc6ce294c7612964d4efe12b835', token:'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'}; }
-})();
+    const saved = JSON.parse(localStorage.getItem('rmap_cloud_cfg')||'{}');
+    return {
+      apiKey: saved.apiKey || CLOUD_DEFAULT.apiKey,
+      binId:  saved.binId  || CLOUD_DEFAULT.binId
+    };
+  }catch{ return CLOUD_DEFAULT; }
+}
+function setCloudCfg(cfg){ localStorage.setItem('rmap_cloud_cfg', JSON.stringify(cfg)); }
 
-function saveGH(){ localStorage.setItem('rmap_github', JSON.stringify(GH)); }
+const CLOUD = {
+  _cache: null,
+  _saveTimer: null,
 
-// ═══════════════════════════════════════════════════════════
-// AUTH & DATA SYSTEM
-// localStorage = tezkor cache, GitHub Gist = haqiqiy backend
-// ═══════════════════════════════════════════════════════════
+  hasConfig(){
+    const c = getCloudCfg();
+    return !!(c.binId && c.apiKey);
+  },
 
-const DB = {
-  getUsers(){ try{return JSON.parse(localStorage.getItem('rmap_users')||'[]');}catch{return [];} },
-  saveUsers(u){ localStorage.setItem('rmap_users', JSON.stringify(u)); DB._pushGist(); },
-  getGroups(){ try{return JSON.parse(localStorage.getItem('rmap_groups')||'[]');}catch{return [];} },
-  saveGroups(g){ localStorage.setItem('rmap_groups', JSON.stringify(g)); DB._pushGist(); },
-  getProgress(uid){ 
+  // JSONBin'dan ma'lumot o'qish
+  async pull(){
+    // file:// protokolida CORS ishlamaydi — lokal cache ishlatamiz
+    if(location.protocol === 'file:') return this._useLocalCache();
+    const c = getCloudCfg();
+    if(!c.binId || !c.apiKey) return this._useLocalCache();
     try{
-      const d = JSON.parse(localStorage.getItem(`rmap_prog_${uid}`)||'{"done":[],"pts":0}');
-      d.done = new Set(d.done);
-      return d;
-    }catch{return {done:new Set(),pts:0};}
+      const r = await fetch(`https://api.jsonbin.io/v3/b/${c.binId}/latest`, {
+        method: 'GET',
+        mode: 'cors',
+        credentials: 'omit',
+        headers: { 'X-Master-Key': c.apiKey, 'X-Bin-Meta': 'false' }
+      });
+      if(!r.ok){ console.warn('JSONBin pull failed:', r.status); return this._useLocalCache(); }
+      const data = await r.json();
+      if(data && (data.users !== undefined || data.groups !== undefined)){
+        CLOUD._cache = data;
+        localStorage.setItem('rmap_cloud_cache', JSON.stringify(data));
+        return true;
+      }
+      return this._useLocalCache();
+    }catch(e){
+      console.warn('Cloud pull error:', e);
+      return this._useLocalCache();
+    }
+  },
+
+  _useLocalCache(){
+    const cached = localStorage.getItem('rmap_cloud_cache');
+    if(cached){ try{ CLOUD._cache = JSON.parse(cached); return true; }catch{} }
+    CLOUD._cache = {users:[], groups:[], progress:{}, v:1};
+    return false;
+  },
+
+  // JSONBin ga ma'lumot saqlash
+  async push(){
+    if(location.protocol === 'file:') return false;
+    const c = getCloudCfg();
+    if(!c.binId || !c.apiKey) return false;
+    if(!CLOUD._cache) return false;
+    try{
+      await fetch(`https://api.jsonbin.io/v3/b/${c.binId}`, {
+        method: 'PUT',
+        mode: 'cors',
+        credentials: 'omit',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Master-Key': c.apiKey
+        },
+        body: JSON.stringify(CLOUD._cache)
+      });
+      localStorage.setItem('rmap_cloud_cache', JSON.stringify(CLOUD._cache));
+      return true;
+    }catch(e){ console.warn('Cloud push error:', e); return false; }
+  },
+
+  // Yangi bin yaratish (birinchi marta)
+  async createBin(apiKey){
+    try{
+      const r = await fetch('https://api.jsonbin.io/v3/b', {
+        method: 'POST',
+        mode: 'cors',
+        credentials: 'omit',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Master-Key': apiKey,
+          'X-Bin-Name': 'registan-roadmap-b2',
+          'X-Bin-Private': 'true'
+        },
+        body: JSON.stringify({users:[], groups:[], progress:{}, v:1})
+      });
+      if(!r.ok) return null;
+      const d = await r.json();
+      return d.metadata?.id || null;
+    }catch(e){ return null; }
+  },
+
+  _schedulePush(){
+    clearTimeout(CLOUD._saveTimer);
+    CLOUD._saveTimer = setTimeout(()=>CLOUD.push(), 1500);
+  },
+
+  getCache(){
+    if(CLOUD._cache) return CLOUD._cache;
+    try{ 
+      const c = localStorage.getItem('rmap_cloud_cache');
+      if(c){ CLOUD._cache = JSON.parse(c); return CLOUD._cache; }
+    }catch{}
+    CLOUD._cache = {users:[], groups:[], progress:{}, v:1};
+    return CLOUD._cache;
+  }
+};
+
+// Eski kod uchun compat
+function getApiKey(){ return getCloudCfg().apiKey || ''; }
+function setApiKey(k){ const c = getCloudCfg(); c.apiKey = k; setCloudCfg(c); }
+
+// ── DB — CLOUD wrapper ──
+const DB = {
+  getUsers(){
+    const c = CLOUD.getCache();
+    return Array.isArray(c.users) ? c.users : [];
+  },
+  saveUsers(u){
+    const c = CLOUD.getCache();
+    c.users = u;
+    CLOUD._schedulePush();
+  },
+  getGroups(){
+    const c = CLOUD.getCache();
+    const g = c.groups;
+    if(Array.isArray(g)) return g;
+    return Object.values(g||{});
+  },
+  saveGroups(g){
+    const c = CLOUD.getCache();
+    c.groups = g;
+    CLOUD._schedulePush();
+  },
+  getProgress(uid){
+    const c = CLOUD.getCache();
+    const raw = (c.progress||{})[uid] || {done:[], pts:0};
+    return { done: new Set(Array.isArray(raw.done)?raw.done:[]), pts: raw.pts||0 };
   },
   saveProgress(uid, prog){
-    localStorage.setItem(`rmap_prog_${uid}`, JSON.stringify({
-      done: [...prog.done],
-      pts: prog.pts
-    }));
-    // Progress Google Sheetsga ketadi (addScore ichida), Gistga shart emas
+    const c = CLOUD.getCache();
+    if(!c.progress) c.progress = {};
+    c.progress[uid] = { done: [...prog.done], pts: prog.pts };
+    CLOUD._schedulePush();
   },
   getSession(){ try{return JSON.parse(localStorage.getItem('rmap_session')||'null');}catch{return null;} },
   saveSession(s){ localStorage.setItem('rmap_session', JSON.stringify(s)); },
   clearSession(){ localStorage.removeItem('rmap_session'); },
 
-  // GitHub Gist → localStorage (pull)
-  async pullGist(){
-    if(!GH.gistId) return false;
-    try{
-      const headers = {'Accept':'application/vnd.github.v3+json'};
-      if(GH.token) headers['Authorization'] = 'token '+GH.token;
-      const r = await fetch(`https://api.github.com/gists/${GH.gistId}`, {headers});
-      if(!r.ok) return false;
-      const data = await r.json();
-      const content = data.files && data.files['roadmap_data.json'] && data.files['roadmap_data.json'].content;
-      if(!content) return false;
-      const parsed = JSON.parse(content);
-      if(parsed.users) localStorage.setItem('rmap_users', JSON.stringify(parsed.users));
-      if(parsed.groups) localStorage.setItem('rmap_groups', JSON.stringify(parsed.groups));
-      return true;
-    }catch(e){ console.warn('Gist pull failed:', e); return false; }
-  },
-
-  // localStorage → GitHub Gist (push)
+  async pullGist(){ return await CLOUD.pull(); },
+  _pushGist(){ CLOUD._schedulePush(); },
   _pushTimer: null,
-  _pushGist(){
-    // Debounce: 1 soniya ichida bir marta
-    clearTimeout(DB._pushTimer);
-    DB._pushTimer = setTimeout(DB._doGistPush, 1000);
-  },
-  async _doGistPush(){
-    if(!GH.gistId || !GH.token) return;
-    try{
-      const payload = {
-        files: {
-          'roadmap_data.json': {
-            content: JSON.stringify({
-              users: DB.getUsers(),
-              groups: DB.getGroups(),
-              updated: new Date().toISOString()
-            }, null, 2)
-          }
-        }
-      };
-      await fetch(`https://api.github.com/gists/${GH.gistId}`, {
-        method: 'PATCH',
-        headers: {
-          'Authorization': 'token '+GH.token,
-          'Content-Type': 'application/json',
-          'Accept': 'application/vnd.github.v3+json'
-        },
-        body: JSON.stringify(payload)
-      });
-    }catch(e){ console.warn('Gist push failed:', e); }
-  }
+  async _doGistPush(){ await CLOUD.push(); }
 };
+
+// GH — eski kod bilan moslik
+let GH = { gistId: '', token: '' };
+function saveGH(){}
 
 // Init default teacher if no users exist
 function initDefaultData(){
@@ -1325,41 +1460,38 @@ function renderSettingsPage(main){
       </div>
     </div>
 
-    <!-- GitHub Gist sozlamasi -->
+
+    <!-- Cloud sinxronizatsiya sozlamasi -->
     <div style="background:#fff;border-radius:var(--radius-lg);border:1px solid var(--bd);overflow:hidden;margin-bottom:20px;">
-      <div style="padding:14px 20px;background:var(--bg);border-bottom:1px solid var(--bd);">
-        <span style="font-size:14px;font-weight:800;color:var(--tx);">🔗 GitHub Gist sinxronizatsiyasi</span>
+      <div style="padding:14px 20px;background:linear-gradient(135deg,#1A2F4A,#1e3a5f);border-bottom:1px solid var(--bd);">
+        <span style="font-size:14px;font-weight:800;color:#fff;">☁️ Cloud sinxronizatsiya (barcha qurilmalarda ishlaydi)</span>
       </div>
       <div style="padding:20px;">
-        <div style="font-size:13px;color:var(--mt);margin-bottom:16px;padding:10px 14px;background:var(--bl3);border-radius:8px;border:1px solid rgba(37,99,235,.15);">
-          <strong>Qanday sozlanadi:</strong><br>
-          1. <a href="https://gist.github.com" target="_blank" style="color:var(--bl2);">gist.github.com</a> ga kiring → yangi Gist yarating (nom: <code>roadmap_data.json</code>, mazmun: <code>{}</code>)<br>
-          2. <a href="https://github.com/settings/tokens" target="_blank" style="color:var(--bl2);">github.com/settings/tokens</a> → "Gist" huquqi bilan token yarating<br>
-          3. Gist URL dagi ID ni (masalan: <code>abc123...def</code>) va tokenni quyida kiriting
+        <div style="font-size:13px;color:var(--tx);margin-bottom:16px;padding:12px 16px;background:${CLOUD.hasConfig()?String('var(--tl3)'):String('var(--rd2)')};border-radius:8px;border:1px solid ${CLOUD.hasConfig()?String('rgba(5,150,105,.2)'):String('rgba(220,38,38,.2)')};">
+          <strong>${CLOUD.hasConfig()?String('✅ Cloud yoqilgan'):String('❌ Cloud o\u2019chirilgan')}</strong> — ${CLOUD.hasConfig()?String('Bin ID: ')+escHtml(getCloudCfg().binId||''):String('JSONBin.io da bepul hisob oching va quyida kiriting')}
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;">
           <div class="form-group" style="margin:0;">
-            <label class="form-label">Gist ID</label>
-            <input class="form-input" id="ghGistId" value="${escHtml(GH.gistId||'')}" placeholder="abc123def456...">
+            <label class="form-label">JSONBin Master Key</label>
+            <input class="form-input" id="cloudApiKey" type="password" value="${escHtml(getCloudCfg().apiKey||'')}" placeholder="$2a$10$..." style="font-family:'JetBrains Mono',monospace;font-size:11px;">
           </div>
           <div class="form-group" style="margin:0;">
-            <label class="form-label">GitHub Token (ghp_...)</label>
-            <input class="form-input" id="ghToken" type="password" value="${escHtml(GH.token||'')}" placeholder="ghp_xxxxxxxxxxxx">
+            <label class="form-label">Bin ID</label>
+            <input class="form-input" id="cloudBinId" value="${escHtml(getCloudCfg().binId||'')}" placeholder="64abc123..." style="font-family:'JetBrains Mono',monospace;font-size:11px;">
           </div>
         </div>
+        <div style="font-size:11px;color:var(--mt);margin-bottom:14px;">
+          📌 <a href="https://jsonbin.io" target="_blank" style="color:var(--bl2);">jsonbin.io</a> ga kiring → Bepul hisob → Dashboard → API Keys → Master Key. Har bir qurilmada bir marta kiriting.
+        </div>
         <div style="display:flex;gap:10px;flex-wrap:wrap;">
-          <button class="t-btn t-btn-primary" onclick="saveGithubConfig()">
+          <button class="t-btn t-btn-primary" onclick="saveCloudApiKey()">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
             Saqlash
           </button>
-          <button class="t-btn t-btn-secondary" onclick="testGistSync()">
-            🔄 Sinxronlashni tekshirish
-          </button>
-          <button class="t-btn t-btn-secondary" onclick="pushToGistNow()">
-            ⬆️ Hozir yuklash
-          </button>
+          <button class="t-btn t-btn-secondary" onclick="testCloudSync()">🔄 Ulanishni tekshirish</button>
+          <button class="t-btn t-btn-secondary" onclick="pushCloudNow()">⬆️ Hozir yuklash</button>
         </div>
-        <div id="ghSyncMsg" style="margin-top:10px;font-size:13px;font-weight:600;"></div>
+        <div id="cloudSyncMsg" style="margin-top:10px;font-size:13px;font-weight:600;"></div>
       </div>
     </div>
 
@@ -1458,13 +1590,12 @@ function showSettNotif(msg, type){
 
 function resetAllData(){
   if(!confirm('DIQQAT! Barcha oquvchilar va guruhlar ochadi!')) return;
-  // Faqat o'quvchilar va guruhlarni o'chiramiz, ustozni saqlaymiz
   const teacher = DB.getUsers().find(u=>u.role==='teacher');
-  DB.saveUsers(teacher ? [teacher] : []);
-  DB.saveGroups([]);
-  // Progress larni o'chirish
-  const keys = Object.keys(localStorage).filter(k=>k.startsWith('rmap_prog_'));
-  keys.forEach(k=>localStorage.removeItem(k));
+  const c = CLOUD.getCache();
+  c.users = teacher ? [teacher] : [];
+  c.groups = [];
+  c.progress = {};
+  CLOUD._schedulePush();
   showNotif("Barcha malumotlar ochirildi");
   showTeacherPage('dashboard');
 }
@@ -1990,37 +2121,48 @@ function applySetupCode(){
   }
 }
 
-function saveGithubConfig(){
-  const gistId = (document.getElementById('ghGistId')||{}).value||'';
-  const token = (document.getElementById('ghToken')||{}).value||'';
-  GH.gistId = gistId.trim();
-  GH.token = token.trim();
-  saveGH();
-  const msg = document.getElementById('ghSyncMsg');
+function saveCloudApiKey(){
+  const keyInp = document.getElementById('cloudApiKey');
+  const binInp = document.getElementById('cloudBinId');
+  const msg = document.getElementById('cloudSyncMsg');
+  const key = keyInp ? keyInp.value.trim() : '';
+  const binId = binInp ? binInp.value.trim() : '';
+  if(!key){ if(msg){ msg.style.color='var(--rd)'; msg.textContent='✗ API kalitni kiriting!'; } return; }
+  setCloudCfg({ apiKey: key, binId: binId || getCloudCfg().binId || '' });
   if(msg){ msg.style.color='var(--tl)'; msg.textContent='✓ Saqlandi!'; setTimeout(()=>msg.textContent='',2500); }
-  showNotif('GitHub sozlamalari saqlandi');
+  showNotif('Cloud sozlamalari saqlandi');
 }
 
-async function testGistSync(){
-  const msg = document.getElementById('ghSyncMsg');
-  if(!GH.gistId){ if(msg){msg.style.color='var(--rd)';msg.textContent='✗ Gist ID kiritmagan!';} return; }
+async function testCloudSync(){
+  const msg = document.getElementById('cloudSyncMsg');
+  if(!CLOUD.hasConfig()){ 
+    if(msg){ msg.style.color='var(--rd)'; msg.textContent='✗ Avval API kaliti va Bin ID kiriting!'; }
+    return;
+  }
   if(msg){ msg.style.color='var(--mt)'; msg.textContent='⏳ Tekshirilmoqda...'; }
-  const ok = await DB.pullGist();
+  const ok = await CLOUD.pull();
   if(msg){
-    if(ok){ msg.style.color='var(--tl)'; msg.textContent='✓ Ulanish muvaffaqiyatli! Ma\'lumotlar yangilandi.'; }
-    else { msg.style.color='var(--rd)'; msg.textContent='✗ Ulanmadi. Gist ID va token to\'g\'riligini tekshiring.'; }
+    if(ok){ msg.style.color='var(--tl)'; msg.textContent='✓ JSONBin ga ulandi! Ma\'lumotlar yangilandi.'; }
+    else { msg.style.color='var(--rd)'; msg.textContent='✗ Ulanmadi. API kalit va Bin ID ni tekshiring.'; }
   }
 }
 
-async function pushToGistNow(){
-  const msg = document.getElementById('ghSyncMsg');
-  if(!GH.gistId||!GH.token){ if(msg){msg.style.color='var(--rd)';msg.textContent='✗ Gist ID va Token kerak!';} return; }
+async function pushCloudNow(){
+  const msg = document.getElementById('cloudSyncMsg');
+  if(!CLOUD.hasConfig()){ 
+    if(msg){ msg.style.color='var(--rd)'; msg.textContent='✗ Cloud sozlanmagan!'; }
+    return;
+  }
   if(msg){ msg.style.color='var(--mt)'; msg.textContent='⏳ Yuklanmoqda...'; }
-  await DB._doGistPush();
-  if(msg){ msg.style.color='var(--tl)'; msg.textContent='✓ GitHub Gistga yuklandi!'; setTimeout(()=>msg.textContent='',3000); }
+  const ok = await CLOUD.push();
+  if(msg){ msg.style.color=ok?'var(--tl)':'var(--rd)'; msg.textContent=ok?'✓ Cloud ga yuklandi!':'✗ Xato yuz berdi.'; setTimeout(()=>msg.textContent='',3000); }
 }
 
-function saveGithubConfigAndTest(){ saveGithubConfig(); testGistSync(); }
+// Eski funksiyalar uchun alias
+function saveGithubConfig(){ saveCloudApiKey(); }
+function saveGithubConfigAndTest(){ saveCloudApiKey(); testCloudSync(); }
+async function testGistSync(){ await testCloudSync(); }
+async function pushToGistNow(){ await pushCloudNow(); }
 
 function tBotActive(id){
   document.querySelectorAll('.t-bn-item').forEach(b=>b.classList.remove('active'));
@@ -2056,7 +2198,7 @@ function initStudentWorkbook(user){
 // GOOGLE SHEETS SYNC
 // Bu yerga Google Apps Script Web App URL ini qo'ying:
 // ═══════════════════════════════════════════════════════════
-const SHEETS_URL = "https://script.google.com/macros/s/AKfycbzBpg1fdmxy0QsM54QePAHCP05_h1Xui3syDXKRmogcXJiAonYiRJgAXDlrYi-s8iiW/exec"; // https://script.google.com/macros/s/XXXX/exec
+const SHEETS_URL = "https://script.google.com/macros/s/AKfycbxSQRH_colMA0U4Q68KZ4Q8JCo2BaWPPnDHLuzKokm7T0nxnaN-kXL0vE7bV0cvyh6j/exec"; // https://script.google.com/macros/s/XXXX/exec
 
 function sendToSheets(data){
   if(!SHEETS_URL) return;
@@ -2113,32 +2255,136 @@ function openSB(){document.getElementById('sb').classList.add('open');document.g
 function closeSB(){document.getElementById('sb').classList.remove('open');document.getElementById('ov').classList.remove('show');}
 
 // ═══════════════════════════════════════════════════════════
-// INIT — Avval GitHub Gistdan sinxronlaymiz, keyin ishlaymiz
+// INIT — Cloud backend bilan ishlash
 // ═══════════════════════════════════════════════════════════
-async function initApp(){
+
+function showApiKeyScreen(){
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('apiKeyScreen').style.display = 'flex';
+  const cfg = getCloudCfg();
+  const ki = document.getElementById('jsonBinKeyInput');
+  const bi = document.getElementById('jsonBinIdExisting');
+  if(ki) ki.value = cfg.apiKey || '';
+  if(bi) bi.value = cfg.binId || '';
+  if(cfg.binId){
+    const bg = document.getElementById('binIdGroup');
+    const eg = document.getElementById('existingBinGroup');
+    const inp = document.getElementById('jsonBinIdInput');
+    if(bg){ bg.style.display='block'; }
+    if(inp){ inp.value = cfg.binId; }
+    if(eg){ eg.style.display='none'; }
+  }
+}
+
+function skipCloudSetup(){
+  document.getElementById('apiKeyScreen').style.display = 'none';
+  document.getElementById('loginScreen').style.display = 'flex';
+  CLOUD._useLocalCache();
+  initDefaultData();
+}
+
+async function saveApiKeyAndContinue(){
+  const keyInp = document.getElementById('jsonBinKeyInput');
+  const existingBinInp = document.getElementById('jsonBinIdExisting');
+  const key = keyInp ? keyInp.value.trim() : '';
+  const existingBin = existingBinInp ? existingBinInp.value.trim() : '';
+  const err = document.getElementById('apiKeyErr');
+  const btn = document.getElementById('apiKeySaveBtn');
+
+  if(!key){ 
+    if(err){ err.style.display='block'; err.textContent='JSONBin Master Key kiriting!'; }
+    return;
+  }
+
+  if(btn){ btn.disabled = true; btn.textContent = '⏳ Sozlanmoqda...'; }
+  if(err){ err.style.display='none'; }
+
+  let binId = existingBin;
+
+  // Bin ID yo'q bo'lsa — yangi yaratamiz
+  if(!binId){
+    binId = await CLOUD.createBin(key);
+    if(!binId){
+      if(err){ err.style.display='block'; err.textContent='✗ Bin yaratilmadi. API kalitni tekshiring.'; }
+      if(btn){ btn.disabled = false; btn.textContent = '☁️ Sozlashni boshlash →'; }
+      return;
+    }
+  }
+
+  // Konfiguratsiyani saqlaymiz
+  setCloudCfg({ apiKey: key, binId: binId });
+
+  // Bin ID ni ko'rsatamiz
+  const bg = document.getElementById('binIdGroup');
+  const binInp = document.getElementById('jsonBinIdInput');
+  const eg = document.getElementById('existingBinGroup');
+  if(bg){ bg.style.display = 'block'; }
+  if(binInp){ binInp.value = binId; }
+  if(eg){ eg.style.display = 'none'; }
+
+  // Cloud dan ma'lumot yuklash
+  const ok = await CLOUD.pull();
   initDefaultData();
 
-  // Gist mavjud bo'lsa — eng yangi ma'lumotlarni yuklaymiz
-  if(GH.gistId){
-    const loginBtn = document.querySelector('.login-btn');
-    const loginSub = document.querySelector('.login-sub');
+  if(btn){ btn.disabled = false; btn.textContent = '☁️ Sozlashni boshlash →'; }
+
+  // Login sahifasiga o'tamiz
+  document.getElementById('apiKeyScreen').style.display = 'none';
+  document.getElementById('loginScreen').style.display = 'flex';
+
+  const sub = document.getElementById('loginSubMsg');
+  if(sub){
+    sub.textContent = ok ? '✅ Cloud ga ulandi! Kiring.' : '⚠️ Mahalliy rejimda ishlaydi.';
+  }
+}
+
+async function initApp(){
+  const cfg = getCloudCfg();
+  const loginBtn = document.getElementById('loginBtn');
+  const loginSub = document.getElementById('loginSubMsg');
+
+  // API key bor lekin Bin ID yo'q — avtomatik bin yaratamiz
+  const isPlaceholder = !cfg.apiKey || cfg.apiKey === 'YOUR_JSONBIN_MASTER_KEY';
+
+  if(isPlaceholder){
+    // API key kiritilmagan — lokal rejim
+    CLOUD._useLocalCache();
+    initDefaultData();
+  } else if(cfg.apiKey && !cfg.binId){
+    // API key bor, Bin ID yo'q — yangi bin yaratamiz
+    if(loginSub) loginSub.textContent = '⏳ Birinchi marta sozlanmoqda...';
+    if(loginBtn) loginBtn.disabled = true;
+
+    const newBinId = await CLOUD.createBin(cfg.apiKey);
+    if(newBinId){
+      setCloudCfg({ apiKey: cfg.apiKey, binId: newBinId });
+      if(loginSub) loginSub.textContent = '✅ Cloud sozlandi! Bin ID: ' + newBinId;
+    } else {
+      if(loginSub) loginSub.textContent = '⚠️ Bin yaratilmadi, lokal rejimda ishlaydi';
+    }
+    CLOUD._useLocalCache();
+    initDefaultData();
+    if(loginBtn) loginBtn.disabled = false;
+  } else if(cfg.apiKey && cfg.binId){
+    // Hamma narsa bor — yuklaymiz
     if(loginSub) loginSub.textContent = '⏳ Ma\'lumotlar yuklanmoqda...';
     if(loginBtn) loginBtn.disabled = true;
-    await DB.pullGist();
-    initDefaultData(); // re-check after pull
-    if(loginSub) loginSub.textContent = 'O\'qituvchi yoki o\'quvchi sifatida kiring';
+
+    const ok = await CLOUD.pull();
+    initDefaultData();
+
+    if(loginSub) loginSub.textContent = ok ? '✅ Cloud ga ulandi. Kiring!' : 'O\'qituvchi yoki o\'quvchi sifatida kiring';
     if(loginBtn) loginBtn.disabled = false;
+  } else {
+    CLOUD._useLocalCache();
+    initDefaultData();
   }
 
   const session = DB.getSession();
   if(session){
     const users = DB.getUsers();
     const found = users.find(u=>u.id===session.id);
-    if(found){
-      startApp(found);
-    } else {
-      DB.clearSession();
-    }
+    if(found){ startApp(found); } else { DB.clearSession(); }
   }
 }
 
