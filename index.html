@@ -1346,12 +1346,18 @@ function initDefaultData(){
 }
 
 // ── LOGIN ──
-function doLogin(){
+async function doLogin(){
   const user = document.getElementById('loginUser').value.trim();
   const pass = document.getElementById('loginPass').value.trim();
   const err = document.getElementById('loginErr');
+  const btn = document.getElementById('loginBtn');
   err.classList.remove('show');
-  
+
+  // Avval cloud dan yangi ma'lumot tortamiz
+  if(btn){ btn.disabled=true; btn.textContent='⏳ Kirilmoqda...'; }
+  await CLOUD.pull();
+  if(btn){ btn.disabled=false; btn.textContent='Kirish →'; }
+
   const users = DB.getUsers();
   const found = users.find(u => u.username===user && u.password===pass);
   if(!found){ err.classList.add('show'); return; }
@@ -1407,9 +1413,14 @@ function updateNavBadges(){
   const myGroups = currentTeacher.isAdmin
     ? allGroups
     : allGroups.filter(g=>g.teacherId===currentTeacher.id);
-  const myGroupIds = new Set(myGroups.map(g=>g.id));
-  const students = DB.getUsers().filter(u=>u.role==='student' && myGroupIds.has(u.groupId));
-  const teachers = DB.getUsers().filter(u=>u.role==='teacher'&&!u.isAdmin);
+  const allUsers = DB.getUsers();
+  const students = allUsers.filter(u => {
+    if(u.role !== 'student') return false;
+    if(currentTeacher.isAdmin) return true;
+    const grp = allGroups.find(g => g.id === u.groupId);
+    return grp && grp.teacherId === currentTeacher.id;
+  });
+  const teachers = allUsers.filter(u=>u.role==='teacher'&&!u.isAdmin);
   document.getElementById('groupsBadge').textContent = myGroups.length;
   document.getElementById('studentsBadge').textContent = students.length;
   const tb = document.getElementById('teachersBadge');
@@ -1938,8 +1949,13 @@ async function renderLivePage(main){
 function renderDashboard(main){
   const allGroups = DB.getGroups();
   const groups = currentTeacher.isAdmin ? allGroups : allGroups.filter(g=>g.teacherId===currentTeacher.id);
-  const myGroupIds = new Set(groups.map(g=>g.id));
-  const students = DB.getUsers().filter(u=>u.role==='student' && myGroupIds.has(u.groupId));
+  const allUsers = DB.getUsers();
+  const students = allUsers.filter(u => {
+    if(u.role !== 'student') return false;
+    if(currentTeacher.isAdmin) return true;
+    const grp = allGroups.find(g => g.id === u.groupId);
+    return grp && grp.teacherId === currentTeacher.id;
+  });
   const totalLessons = UNITS.reduce((a,u)=>a+u.lessons.length,0);
   
   let avgProg = 0;
@@ -2018,14 +2034,17 @@ function groupCard(g){
 
 function renderStudentsPage(main){
   const allGroups = DB.getGroups();
-  // Admin barcha guruhlarni, oddiy ustoz faqat o'zinikini ko'radi
-  const myGroups = currentTeacher.isAdmin
-    ? allGroups
-    : allGroups.filter(g=>g.teacherId===currentTeacher.id);
-  const myGroupIds = new Set(myGroups.map(g=>g.id));
-  const students = DB.getUsers().filter(u=>u.role==='student' && myGroupIds.has(u.groupId));
-  const groups = allGroups;
+  const allUsers = DB.getUsers();
   const totalLessons = UNITS.reduce((a,u)=>a+u.lessons.length,0);
+
+  // Har bir o'quvchi uchun guruhini topib, guruhning teacherId ni tekshiramiz
+  const students = allUsers.filter(u => {
+    if(u.role !== 'student') return false;
+    if(currentTeacher.isAdmin) return true; // admin hammani ko'radi
+    const grp = allGroups.find(g => g.id === u.groupId);
+    return grp && grp.teacherId === currentTeacher.id; // faqat o'z guruhi
+  });
+  const groups = allGroups;
   
   const rows = students.map(s=>{
     const p = DB.getProgress(s.id);
