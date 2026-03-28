@@ -1427,6 +1427,25 @@ function updateNavBadges(){
   if(tb) tb.textContent = teachers.length;
 }
 
+// ── KIRISH HUQUQI TEKSHIRUVI ──
+function canAccessGroup(groupId){
+  if(!currentTeacher) return false;
+  if(currentTeacher.isAdmin) return true;
+  const g = DB.getGroups().find(x=>x.id===groupId);
+  return !!(g && g.teacherId === currentTeacher.id);
+}
+function canAccessStudent(studentId){
+  if(!currentTeacher) return false;
+  if(currentTeacher.isAdmin) return true;
+  const s = DB.getUsers().find(u=>u.id===studentId);
+  if(!s) return false;
+  const g = DB.getGroups().find(x=>x.id===s.groupId);
+  return !!(g && g.teacherId === currentTeacher.id);
+}
+function accessDenied(){
+  showNotif('⛔ Ruxsat yo\'q! Bu ma\'lumotlar sizga tegishli emas.');
+}
+
 function showTeacherPage(page){
   document.querySelectorAll('.t-nav-item').forEach(n=>n.classList.remove('active'));
   const navMap = {dashboard:'navDash', groups:'navGroups', students:'navStudents', live:'navLive', settings:'navSettings', teachers:'navTeachers'};
@@ -2093,6 +2112,7 @@ function renderStudentsPage(main){
 }
 
 function openGroupDetail(groupId){
+  if(!canAccessGroup(groupId)){ accessDenied(); return; }
   selectedGroupId = groupId;
   const groups = DB.getGroups();
   const g = groups.find(x=>x.id===groupId);
@@ -2157,6 +2177,7 @@ function openGroupDetail(groupId){
 }
 
 function viewStudentDetail(studentId){
+  if(!canAccessStudent(studentId)){ accessDenied(); return; }
   const users = DB.getUsers();
   const s = users.find(u=>u.id===studentId);
   if(!s) return;
@@ -2244,6 +2265,7 @@ function createGroup(){
 }
 
 function openAddStudent(groupId){
+  if(!canAccessGroup(groupId)){ accessDenied(); return; }
   selectedGroupId = groupId;
   const g = DB.getGroups().find(x=>x.id===groupId);
   document.getElementById('modalAddStudentSub').textContent = g ? `"${g.name}" guruhiga o'quvchi qo'shing` : "O'quvchi qo'shing";
@@ -2287,6 +2309,7 @@ function addStudent(){
 }
 
 function deleteGroup(groupId){
+  if(!canAccessGroup(groupId)){ accessDenied(); return; }
   if(!confirm('Guruhni o\'chirasizmi? O\'quvchilar ham o\'chadi!')) return;
   let groups = DB.getGroups().filter(g=>g.id!==groupId);
   DB.saveGroups(groups);
@@ -2300,6 +2323,7 @@ function deleteGroup(groupId){
 }
 
 function deleteStudent(studentId){
+  if(!canAccessStudent(studentId)){ accessDenied(); return; }
   if(!confirm('O\'quvchini o\'chirasizmi?')) return;
   let users = DB.getUsers().filter(u=>u.id!==studentId);
   DB.saveUsers(users);
@@ -2309,6 +2333,7 @@ function deleteStudent(studentId){
 }
 
 function removeStudentFromGroup(studentId, groupId){
+  if(!canAccessGroup(groupId) || !canAccessStudent(studentId)){ accessDenied(); return; }
   if(!confirm('O\'quvchini guruhdan chiqarasizmi?')) return;
   let users = DB.getUsers();
   const idx = users.findIndex(u=>u.id===studentId);
