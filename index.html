@@ -621,42 +621,33 @@ html,body{
 <body>
 
 
-<!-- API KEY SETUP SCREEN -->
+<!-- SUPABASE SETUP SCREEN -->
 <div id="apiKeyScreen" class="login-wrap" style="display:none;">
-  <div class="login-card" style="max-width:480px;">
+  <div class="login-card" style="max-width:500px;">
     <div class="login-logo">
-      <div class="login-logo-i">☁️</div>
+      <div class="login-logo-i" style="font-size:0;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg></div>
       <div>
-        <div class="login-logo-t">Cloud Ulanish</div>
+        <div class="login-logo-t">Supabase Ulanish</div>
         <div class="login-logo-s">Registan LC · Bir marta sozlash</div>
       </div>
     </div>
     <div class="login-title" style="font-size:18px;">Backend sozlash</div>
-    <div class="login-sub" style="text-align:left;font-size:12px;line-height:1.7;margin-bottom:0;">
-      <strong>JSONBin.io</strong> — bepul, hech qanday server kerak emas.<br>
-      Bir marta sozlang — barcha qurilmalarda ishlaydi.
+    <div style="margin:12px 0 16px;padding:12px;background:var(--bl3);border-radius:8px;font-size:12px;line-height:1.8;border:1px solid rgba(37,99,235,.15);">
+      <strong><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;"><path d="M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/></svg> Qanday qilish:</strong><br>
+      1. <a href="https://supabase.com" target="_blank" style="color:var(--bl2);">supabase.com</a> → Loyihangizni oching<br>
+      2. <strong>Settings → API</strong> → Project URL va anon key ni nusxalang<br>
+      3. Quyida kiriting → Saqlash tugmasini bosing &#10003;
     </div>
-    <div style="margin:14px 0;padding:12px;background:var(--bl3);border-radius:8px;font-size:12px;line-height:1.7;border:1px solid rgba(37,99,235,.15);">
-      <strong>📋 Qanday qilish:</strong><br>
-      1. <a href="https://jsonbin.io" target="_blank" style="color:var(--bl2);">jsonbin.io</a> ga kiring → Bepul ro'yxatdan o'ting<br>
-      2. Dashboard → API Keys → Master Key ni nusxalang<br>
-      3. Quyida kiriting → <strong>"Sozlashni boshlash"</strong> tugmasini bosing<br>
-      4. Avtomatik Bin ID yaratiladi — tayyor! ✅
-    </div>
-    <div id="apiKeyErr" class="login-err">Xato yuz berdi. API kalitni tekshiring.</div>
+    <div id="apiKeyErr" class="login-err">Xato yuz berdi. URL va API kalitni tekshiring.</div>
     <div class="form-group">
-      <label class="form-label">JSONBin Master Key</label>
-      <input class="form-input" id="jsonBinKeyInput" type="password" placeholder="$2a$10$..." autocomplete="off" style="font-family:'JetBrains Mono',monospace;font-size:12px;">
+      <label class="form-label">Supabase Project URL</label>
+      <input class="form-input" id="supaUrlInput" type="text" placeholder="https://xxxxxxxxxxxx.supabase.co" autocomplete="off" style="font-family:'JetBrains Mono',monospace;font-size:12px;">
     </div>
-    <div class="form-group" id="binIdGroup" style="display:none;">
-      <label class="form-label">Bin ID (avtomatik yaratildi)</label>
-      <input class="form-input" id="jsonBinIdInput" style="font-family:'JetBrains Mono',monospace;font-size:12px;" readonly>
+    <div class="form-group">
+      <label class="form-label">Supabase Anon Key</label>
+      <input class="form-input" id="supaKeyInput" type="password" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." autocomplete="off" style="font-family:'JetBrains Mono',monospace;font-size:12px;">
     </div>
-    <div class="form-group" id="existingBinGroup">
-      <div style="font-size:11px;color:var(--mt);margin-bottom:4px;">Allaqachon Bin ID bor? (ixtiyoriy)</div>
-      <input class="form-input" id="jsonBinIdExisting" placeholder="64abc123..." style="font-family:'JetBrains Mono',monospace;font-size:12px;">
-    </div>
-    <button class="login-btn" id="apiKeySaveBtn" onclick="saveApiKeyAndContinue()">☁️ Sozlashni boshlash →</button>
+    <button class="login-btn" id="apiKeySaveBtn" onclick="saveApiKeyAndContinue()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg> Ulanish va saqlash →</button>
     <div style="margin-top:10px;text-align:center;">
       <button onclick="skipCloudSetup()" style="background:none;border:none;color:var(--mt);font-size:12px;font-family:'Nunito',sans-serif;cursor:pointer;text-decoration:underline;">
         Hozircha o'tkazib yuborish (faqat lokal rejim)
@@ -689,10 +680,10 @@ html,body{
     <button class="login-btn" id="loginBtn" onclick="doLogin()">Kirish →</button>
     <div style="display:flex;align-items:center;justify-content:space-between;margin-top:10px;">
       <button onclick="toggleSetupCode()" style="background:none;border:none;color:var(--mt);font-size:12px;font-family:'Nunito',sans-serif;cursor:pointer;text-decoration:underline;">
-        📋 Setup kodi bormi?
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;"><path d="M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/></svg> Setup kodi bormi?
       </button>
       <button onclick="showApiKeyScreen()" style="background:none;border:none;color:var(--mt);font-size:12px;font-family:'Nunito',sans-serif;cursor:pointer;text-decoration:underline;">
-        🔑 API kalitini o'zgartirish
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;"><circle cx="8" cy="12" r="4"/><path d="M12 12h8m-3-2v4"/></svg> API kalitini o'zgartirish
       </button>
     </div>
     <div id="setupCodePanel" style="display:none;margin-top:12px;border-top:1px solid var(--bd);padding-top:14px;">
@@ -743,7 +734,7 @@ html,body{
       <div class="t-nav-sec">Kuzatuv</div>
       <div class="t-nav-item" id="navLive" onclick="showTeacherPage('live')" style="color:rgba(255,255,255,.9);">
         <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-        📡 Jonli Progress
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;"><path d="M5 12.55a11 11 0 0114.08 0"/><path d="M1.42 9a16 16 0 0121.16 0"/><path d="M8.53 16.11a6 6 0 016.95 0"/><circle cx="12" cy="20" r="1"/></svg> Jonli Progress
       </div>
       <div class="t-nav-sec">Tizim</div>
       <div class="t-nav-item" id="navTeachers" onclick="showTeacherPage('teachers')" style="display:none;">
@@ -894,7 +885,7 @@ html,body{
       <input class="form-input" id="newStudentPass" type="text" placeholder="Parol kiriting" maxlength="20">
     </div>
     <div id="newCredBox" class="creds-box" style="display:none;">
-      <div class="creds-label">✅ O'quvchi qo'shildi! Kirish ma'lumotlari:</div>
+      <div class="creds-label"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> O'quvchi qo'shildi! Kirish ma'lumotlari:</div>
       <div class="creds-row"><span class="creds-key">Login:</span><span class="creds-val" id="credUser"></span></div>
       <div class="creds-row"><span class="creds-key">Parol:</span><span class="creds-val" id="credPass"></span></div>
     </div>
@@ -1146,140 +1137,214 @@ function chkAll(){
 // ═══════════════════════════════════════════════════════════
 
 // ═══════════════════════════════════════════════════════════
-// GITHUB GIST CONFIG (teacher sets this once in Settings)
-// ═══════════════════════════════════════════════════════════
-// ═══════════════════════════════════════════════════════════
-// CLOUD BACKEND — JSONBin.io orqali haqiqiy sinxronizatsiya
-// Bepul, hech qanday server kerak emas.
-// Ustoz bir marta BIN ID va API KEY kiritadi — tamom.
+// SUPABASE BACKEND
+// supabase.com → Settings → API → Project URL + anon key
 // ═══════════════════════════════════════════════════════════
 
-// ═══════════════════════════════════════════════════════════
-// CLOUD SOZLAMALARI — faqat apiKey ni kiriting!
-// jsonbin.io → bepul hisob → API Keys → Master Key
-// Bin ID avtomatik yaratiladi ✅
-// ═══════════════════════════════════════════════════════════
-const CLOUD_DEFAULT = {
-  apiKey: '$2a$10$k5dV.bNsl9ZLgZwqshr3Lu0plqK2OIEJTU9P6QbhkJ6LmygUPmVxS',
-  binId:  '69c21f2bb7ec241ddc990ed3'
-};
+// ── SUPABASE DEFAULT CONFIG ──────────────────────────────────
+const SUPA_DEFAULT_URL = 'https://yqntmwppltbubiupgswk.supabase.co';
+const SUPA_DEFAULT_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlxbnRtd3BwbHRidWJpdXBnc3drIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ2NzgwOTksImV4cCI6MjA5MDI1NDA5OX0.MpdDT2DzU8DbYA-8wFgbHNwRpE4PchzxC7Fkf5MAsDI';
 
-function getCloudCfg(){
+function getSupaCfg(){
   try{
-    const saved = JSON.parse(localStorage.getItem('rmap_cloud_cfg')||'{}');
+    const saved = JSON.parse(localStorage.getItem('rmap_supa_cfg')||'{}');
     return {
-      apiKey: saved.apiKey || CLOUD_DEFAULT.apiKey,
-      binId:  saved.binId  || CLOUD_DEFAULT.binId
+      url: saved.url || SUPA_DEFAULT_URL,
+      key: saved.key || SUPA_DEFAULT_KEY
     };
-  }catch{ return CLOUD_DEFAULT; }
+  }catch{ return { url: SUPA_DEFAULT_URL, key: SUPA_DEFAULT_KEY }; }
 }
-function setCloudCfg(cfg){ localStorage.setItem('rmap_cloud_cfg', JSON.stringify(cfg)); }
+function setSupaCfg(cfg){ localStorage.setItem('rmap_supa_cfg', JSON.stringify(cfg)); }
 
-const CLOUD = {
+// Eski CLOUD.hasConfig() ni qaytarish uchun wrapper
+function getCloudCfg(){ return getSupaCfg(); }
+function setCloudCfg(c){ setSupaCfg(c); }
+function getApiKey(){ return getSupaCfg().key||''; }
+function setApiKey(k){ const c=getSupaCfg(); c.key=k; setSupaCfg(c); }
+
+const SUPA = {
   _cache: null,
   _saveTimer: null,
 
-  hasConfig(){
-    const c = getCloudCfg();
-    return !!(c.binId && c.apiKey);
+  get cfg(){ return getSupaCfg(); },
+
+  hdrs(){
+    const k = this.cfg.key;
+    return {
+      'apikey': k,
+      'Authorization': 'Bearer '+k,
+      'Content-Type': 'application/json'
+    };
   },
 
-  // JSONBin'dan ma'lumot o'qish
+  hasConfig(){
+    const c = this.cfg;
+    return !!(c.url && c.key);
+  },
+
+  // Supabase dan barcha ma'lumotlarni yuklab local cache ga saqlaymiz
   async pull(){
-    // file:// protokolida CORS ishlamaydi — lokal cache ishlatamiz
-    if(location.protocol === 'file:') return this._useLocalCache();
-    const c = getCloudCfg();
-    if(!c.binId || !c.apiKey) return this._useLocalCache();
+    if(!this.hasConfig()) return this._useLocalCache();
     try{
-      const r = await fetch(`https://api.jsonbin.io/v3/b/${c.binId}/latest`, {
-        method: 'GET',
-        mode: 'cors',
-        credentials: 'omit',
-        headers: { 'X-Master-Key': c.apiKey, 'X-Bin-Meta': 'false' }
-      });
-      if(!r.ok){ console.warn('JSONBin pull failed:', r.status); return this._useLocalCache(); }
-      const data = await r.json();
-      if(data && (data.users !== undefined || data.groups !== undefined)){
-        CLOUD._cache = data;
-        localStorage.setItem('rmap_cloud_cache', JSON.stringify(data));
-        return true;
+      const base = this.cfg.url+'/rest/v1';
+      const h = this.hdrs();
+      const [ur, gr, pr] = await Promise.all([
+        fetch(base+'/rmap_users?select=*', {headers:h}),
+        fetch(base+'/rmap_groups?select=*', {headers:h}),
+        fetch(base+'/rmap_progress?select=*', {headers:h})
+      ]);
+      if(!ur.ok||!gr.ok||!pr.ok){
+        console.warn('Supabase pull failed:', ur.status, gr.status, pr.status);
+        return this._useLocalCache();
       }
-      return this._useLocalCache();
+      const usersRaw  = await ur.json();
+      const groupsRaw = await gr.json();
+      const progRaw   = await pr.json();
+
+      const users = usersRaw.map(u=>({
+        id: u.id, username: u.username, password: u.password,
+        name: u.name||'', role: u.role,
+        groupId: u.group_id||null, isAdmin: !!u.is_admin
+      }));
+      const groups = groupsRaw.map(g=>({
+        id: g.id, name: g.name,
+        teacherId: g.teacher_id, createdAt: g.created_at||''
+      }));
+      const progress = {};
+      progRaw.forEach(p=>{
+        progress[p.user_id] = { done: Array.isArray(p.done)?p.done:[], pts: p.pts||0 };
+      });
+
+      this._cache = {users, groups, progress, v:1};
+      localStorage.setItem('rmap_cloud_cache', JSON.stringify(this._cache));
+      return true;
     }catch(e){
-      console.warn('Cloud pull error:', e);
+      console.warn('Supabase pull error:', e);
       return this._useLocalCache();
     }
   },
 
   _useLocalCache(){
     const cached = localStorage.getItem('rmap_cloud_cache');
-    if(cached){ try{ CLOUD._cache = JSON.parse(cached); return true; }catch{} }
-    CLOUD._cache = {users:[], groups:[], progress:{}, v:1};
+    if(cached){ try{ this._cache = JSON.parse(cached); return true; }catch{} }
+    this._cache = {users:[], groups:[], progress:{}, v:1};
     return false;
   },
 
-  // JSONBin ga ma'lumot saqlash
+  // Local cache → Supabase ga yuklash (upsert + delete)
   async push(){
-    if(location.protocol === 'file:') return false;
-    const c = getCloudCfg();
-    if(!c.binId || !c.apiKey) return false;
-    if(!CLOUD._cache) return false;
+    if(!this.hasConfig()||!this._cache) return false;
     try{
-      await fetch(`https://api.jsonbin.io/v3/b/${c.binId}`, {
-        method: 'PUT',
-        mode: 'cors',
-        credentials: 'omit',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Master-Key': c.apiKey
-        },
-        body: JSON.stringify(CLOUD._cache)
-      });
-      localStorage.setItem('rmap_cloud_cache', JSON.stringify(CLOUD._cache));
+      const {users, groups, progress} = this._cache;
+      await Promise.all([
+        this._syncUsers(users),
+        this._syncGroups(groups),
+        this._syncProgress(progress)
+      ]);
+      localStorage.setItem('rmap_cloud_cache', JSON.stringify(this._cache));
       return true;
-    }catch(e){ console.warn('Cloud push error:', e); return false; }
+    }catch(e){ console.warn('Supabase push error:', e); return false; }
   },
 
-  // Yangi bin yaratish (birinchi marta)
-  async createBin(apiKey){
-    try{
-      const r = await fetch('https://api.jsonbin.io/v3/b', {
-        method: 'POST',
-        mode: 'cors',
-        credentials: 'omit',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Master-Key': apiKey,
-          'X-Bin-Name': 'registan-roadmap-b2',
-          'X-Bin-Private': 'true'
-        },
-        body: JSON.stringify({users:[], groups:[], progress:{}, v:1})
+  async _syncUsers(users){
+    const base = this.cfg.url+'/rest/v1/rmap_users';
+    const h = this.hdrs();
+    // Mavjud IDlarni olamiz
+    const er = await fetch(base+'?select=id', {headers:h});
+    const existing = er.ok ? await er.json() : [];
+    const existIds = new Set(existing.map(x=>x.id));
+    const newIds   = new Set(users.map(x=>x.id));
+    // O'chirilganlarni topamiz
+    const toDelete = [...existIds].filter(id=>!newIds.has(id));
+    await Promise.all(toDelete.map(id=>
+      fetch(base+'?id=eq.'+encodeURIComponent(id),{method:'DELETE',headers:h})
+    ));
+    // Upsert
+    if(users.length){
+      const dbUsers = users.map(u=>({
+        id:u.id, username:u.username, password:u.password,
+        name:u.name||'', role:u.role,
+        group_id:u.groupId||null, is_admin:!!u.isAdmin
+      }));
+      await fetch(base, {
+        method:'POST',
+        headers:{...h,'Prefer':'resolution=merge-duplicates,return=minimal'},
+        body: JSON.stringify(dbUsers)
       });
-      if(!r.ok) return null;
-      const d = await r.json();
-      return d.metadata?.id || null;
-    }catch(e){ return null; }
+    }
+  },
+
+  async _syncGroups(groups){
+    const base = this.cfg.url+'/rest/v1/rmap_groups';
+    const h = this.hdrs();
+    const er = await fetch(base+'?select=id',{headers:h});
+    const existing = er.ok ? await er.json() : [];
+    const existIds = new Set(existing.map(x=>x.id));
+    const newIds   = new Set(groups.map(x=>x.id));
+    const toDelete = [...existIds].filter(id=>!newIds.has(id));
+    await Promise.all(toDelete.map(id=>
+      fetch(base+'?id=eq.'+encodeURIComponent(id),{method:'DELETE',headers:h})
+    ));
+    if(groups.length){
+      const dbGroups = groups.map(g=>({
+        id:g.id, name:g.name,
+        teacher_id:g.teacherId, created_at:g.createdAt||''
+      }));
+      await fetch(base,{
+        method:'POST',
+        headers:{...h,'Prefer':'resolution=merge-duplicates,return=minimal'},
+        body: JSON.stringify(dbGroups)
+      });
+    }
+  },
+
+  async _syncProgress(progress){
+    if(!progress||!Object.keys(progress).length) return;
+    const base = this.cfg.url+'/rest/v1/rmap_progress';
+    const h = this.hdrs();
+    const dbProg = Object.entries(progress).map(([uid,p])=>({
+      user_id: uid,
+      done: Array.isArray(p.done)?p.done:[...p.done],
+      pts: p.pts||0
+    }));
+    await fetch(base,{
+      method:'POST',
+      headers:{...h,'Prefer':'resolution=merge-duplicates,return=minimal'},
+      body: JSON.stringify(dbProg)
+    });
   },
 
   _schedulePush(){
-    clearTimeout(CLOUD._saveTimer);
-    CLOUD._saveTimer = setTimeout(()=>CLOUD.push(), 1500);
+    clearTimeout(this._saveTimer);
+    this._saveTimer = setTimeout(()=>this.push(), 1500);
   },
 
   getCache(){
-    if(CLOUD._cache) return CLOUD._cache;
-    try{ 
+    if(this._cache) return this._cache;
+    try{
       const c = localStorage.getItem('rmap_cloud_cache');
-      if(c){ CLOUD._cache = JSON.parse(c); return CLOUD._cache; }
+      if(c){ this._cache=JSON.parse(c); return this._cache; }
     }catch{}
-    CLOUD._cache = {users:[], groups:[], progress:{}, v:1};
-    return CLOUD._cache;
-  }
+    this._cache = {users:[],groups:[],progress:{},v:1};
+    return this._cache;
+  },
+
+  // Eski CLOUD interfeysi bilan moslik
+  async createBin(){ return true; }
 };
 
-// Eski kod uchun compat
-function getApiKey(){ return getCloudCfg().apiKey || ''; }
-function setApiKey(k){ const c = getCloudCfg(); c.apiKey = k; setCloudCfg(c); }
+// CLOUD → SUPA alias (eski kod bilan moslik)
+const CLOUD = {
+  hasConfig(){ return SUPA.hasConfig(); },
+  async pull(){ return await SUPA.pull(); },
+  async push(){ return await SUPA.push(); },
+  _useLocalCache(){ return SUPA._useLocalCache(); },
+  _schedulePush(){ SUPA._schedulePush(); },
+  getCache(){ return SUPA.getCache(); },
+  _cache: null,
+  get _saveTimer(){ return SUPA._saveTimer; },
+  async createBin(){ return true; }
+};
 
 // ── DB — CLOUD wrapper ──
 const DB = {
@@ -1354,7 +1419,7 @@ async function doLogin(){
   err.classList.remove('show');
 
   // Avval cloud dan yangi ma'lumot tortamiz
-  if(btn){ btn.disabled=true; btn.textContent='⏳ Kirilmoqda...'; }
+  if(btn){ btn.disabled=true; btn.textContent='Kirilmoqda...'; }
   await CLOUD.pull();
   if(btn){ btn.disabled=false; btn.textContent='Kirish →'; }
 
@@ -1443,7 +1508,7 @@ function canAccessStudent(studentId){
   return !!(g && g.teacherId === currentTeacher.id);
 }
 function accessDenied(){
-  showNotif('⛔ Ruxsat yo\'q! Bu ma\'lumotlar sizga tegishli emas.');
+  showNotif('Ruxsat yo\'q! Bu ma\'lumotlar sizga tegishli emas.');
 }
 
 function showTeacherPage(page){
@@ -1480,29 +1545,29 @@ function renderSettingsPage(main){
   const totalLessons = UNITS.reduce((a,u)=>a+u.lessons.length,0);
 
   const cloudSection = currentTeacher.isAdmin ? `
-    <!-- Cloud sinxronizatsiya sozlamasi — faqat admin -->
+    <!-- Supabase sinxronizatsiya sozlamasi — faqat admin -->
     <div style="background:#fff;border-radius:var(--radius-lg);border:1px solid var(--bd);overflow:hidden;margin-bottom:20px;">
       <div style="padding:14px 20px;background:linear-gradient(135deg,#1A2F4A,#1e3a5f);border-bottom:1px solid var(--bd);">
-        <span style="font-size:14px;font-weight:800;color:#fff;">☁️ Cloud sinxronizatsiya</span>
+        <span style="font-size:14px;font-weight:800;color:#fff;display:flex;align-items:center;gap:6px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg> Supabase sinxronizatsiya</span>
       </div>
       <div style="padding:20px;">
-        <div style="font-size:13px;color:var(--tx);margin-bottom:16px;padding:12px 16px;background:${CLOUD.hasConfig()?'var(--tl3)':'var(--rd2)'};border-radius:8px;border:1px solid ${CLOUD.hasConfig()?'rgba(5,150,105,.2)':'rgba(220,38,38,.2)'};">
-          <strong>${CLOUD.hasConfig()?'✅ Cloud yoqilgan':'❌ Cloud o\'chirilgan'}</strong> — ${CLOUD.hasConfig()?'Bin ID: '+escHtml(getCloudCfg().binId||''):'JSONBin.io da bepul hisob oching va quyida kiriting'}
+        <div style="font-size:13px;color:var(--tx);margin-bottom:16px;padding:12px 16px;background:${SUPA.hasConfig()?'var(--tl3)':'var(--rd2)'};border-radius:8px;border:1px solid ${SUPA.hasConfig()?'rgba(5,150,105,.2)':'rgba(220,38,38,.2)'};">
+          <strong>${SUPA.hasConfig()?'Supabase yoqilgan':'Supabase ulanmagan'}</strong>${SUPA.hasConfig()?' — '+escHtml(getSupaCfg().url||''):''}
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;">
           <div class="form-group" style="margin:0;">
-            <label class="form-label">JSONBin Master Key</label>
-            <input class="form-input" id="cloudApiKey" type="password" value="${escHtml(getCloudCfg().apiKey||'')}" placeholder="$2a$10$..." style="font-family:'JetBrains Mono',monospace;font-size:11px;">
+            <label class="form-label">Project URL</label>
+            <input class="form-input" id="cloudSupaUrl" type="text" value="${escHtml(getSupaCfg().url||'')}" placeholder="https://xxxx.supabase.co" style="font-family:'JetBrains Mono',monospace;font-size:11px;">
           </div>
           <div class="form-group" style="margin:0;">
-            <label class="form-label">Bin ID</label>
-            <input class="form-input" id="cloudBinId" value="${escHtml(getCloudCfg().binId||'')}" placeholder="64abc123..." style="font-family:'JetBrains Mono',monospace;font-size:11px;">
+            <label class="form-label">Anon Key</label>
+            <input class="form-input" id="cloudSupaKey" type="password" value="${escHtml(getSupaCfg().key||'')}" placeholder="eyJhbGci..." style="font-family:'JetBrains Mono',monospace;font-size:11px;">
           </div>
         </div>
         <div style="display:flex;gap:10px;flex-wrap:wrap;">
           <button class="t-btn t-btn-primary" onclick="saveCloudApiKey()">Saqlash</button>
-          <button class="t-btn t-btn-secondary" onclick="testCloudSync()">🔄 Ulanishni tekshirish</button>
-          <button class="t-btn t-btn-secondary" onclick="pushCloudNow()">⬆️ Hozir yuklash</button>
+          <button class="t-btn t-btn-secondary" onclick="testCloudSync()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg> Ulanishni tekshirish</button>
+          <button class="t-btn t-btn-secondary" onclick="pushCloudNow()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3"/></svg> Hozir yuklash</button>
         </div>
         <div id="cloudSyncMsg" style="margin-top:10px;font-size:13px;font-weight:600;"></div>
       </div>
@@ -1511,30 +1576,30 @@ function renderSettingsPage(main){
     <!-- Xavfli zona — faqat admin -->
     <div style="background:#fff;border-radius:var(--radius-lg);border:1.5px solid var(--rd2);overflow:hidden;margin-bottom:20px;">
       <div style="padding:14px 20px;background:var(--rd2);border-bottom:1px solid rgba(220,38,38,.15);">
-        <span style="font-size:14px;font-weight:800;color:var(--rd);">⚠️ Xavfli zona</span>
+        <span style="font-size:14px;font-weight:800;color:var(--rd);display:flex;align-items:center;gap:6px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Xavfli zona</span>
       </div>
       <div style="padding:20px;display:flex;align-items:center;justify-content:space-between;gap:16px;">
         <div>
           <div style="font-size:14px;font-weight:700;color:var(--tx);">Barcha ma'lumotlarni o'chirish</div>
           <div style="font-size:12px;color:var(--mt);margin-top:2px;">Barcha o'quvchilar, guruhlar va progresslar o'chadi. Bu amalni qaytarib bo'lmaydi!</div>
         </div>
-        <button class="t-btn t-btn-danger" onclick="resetAllData()" style="flex-shrink:0;">🗑️ Hammani o'chirish</button>
+        <button class="t-btn t-btn-danger" onclick="resetAllData()" style="flex-shrink:0;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6m4-6v6"/><path d="M9 6V4h6v2"/></svg> Hammani o'chirish</button>
       </div>
     </div>
 
     <!-- Setup kodi — faqat admin -->
     <div style="background:#fff;border-radius:var(--radius-lg);border:1px solid var(--bd);overflow:hidden;margin-bottom:20px;">
       <div style="padding:14px 20px;background:var(--bg);border-bottom:1px solid var(--bd);">
-        <span style="font-size:14px;font-weight:800;color:var(--tx);">📋 O'quvchilar uchun Setup kodi</span>
+        <span style="font-size:14px;font-weight:800;color:var(--tx);display:flex;align-items:center;gap:6px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;"><path d="M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/></svg> O'quvchilar uchun Setup kodi</span>
       </div>
       <div style="padding:20px;">
         <div style="font-size:13px;color:var(--mt);margin-bottom:14px;">
           O'quvchilar boshqa qurilmada ochganida Setup kodi orqali kirishlari mumkin.
         </div>
-        <button class="t-btn t-btn-primary" onclick="generateSetupCode()" style="margin-bottom:12px;">📋 Setup kodini yaratish</button>
+        <button class="t-btn t-btn-primary" onclick="generateSetupCode()" style="margin-bottom:12px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;"><path d="M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/></svg> Setup kodini yaratish</button>
         <div id="setupCodeResult" style="display:none;">
           <textarea id="setupCodeText" readonly style="width:100%;min-height:100px;padding:10px;border:2px solid var(--bl2);border-radius:8px;font-size:11px;font-family:'JetBrains Mono',monospace;background:var(--bl3);color:var(--bl);resize:vertical;cursor:pointer;" onclick="this.select();document.execCommand('copy');showNotif('Kod nusxalandi!');" title="Bosing — nusxalanadi"></textarea>
-          <div style="font-size:11px;color:var(--mt);margin-top:6px;">👆 Bosing — avtomatik nusxalanadi.</div>
+          <div style="font-size:11px;color:var(--mt);margin-top:6px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;"><path d="M4 4l6.5 16.5 2.5-7.5 7.5-2.5L4 4z"/></svg> Bosing — avtomatik nusxalanadi.</div>
         </div>
       </div>
     </div>
@@ -1547,7 +1612,7 @@ function renderSettingsPage(main){
     <!-- Profil kartasi -->
     <div style="background:#fff;border-radius:var(--radius-lg);border:1px solid var(--bd);overflow:hidden;margin-bottom:20px;">
       <div style="padding:14px 20px;background:var(--bg);border-bottom:1px solid var(--bd);">
-        <span style="font-size:14px;font-weight:800;color:var(--tx);">👤 Profil ma'lumotlari</span>
+        <span style="font-size:14px;font-weight:800;color:var(--tx);display:flex;align-items:center;gap:6px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> Profil ma'lumotlari</span>
       </div>
       <div style="padding:24px;">
         <div style="display:flex;align-items:center;gap:18px;margin-bottom:24px;">
@@ -1582,7 +1647,7 @@ function renderSettingsPage(main){
           </div>
         </div>
         <div style="display:flex;gap:10px;">
-          <button class="t-btn t-btn-primary" onclick="saveTeacherProfile()">💾 Saqlash</button>
+          <button class="t-btn t-btn-primary" onclick="saveTeacherProfile()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Saqlash</button>
           <button class="t-btn t-btn-secondary" onclick="showTeacherPage('dashboard')">Bekor qilish</button>
         </div>
         <div id="settNotif" style="margin-top:12px;padding:10px 14px;border-radius:8px;font-size:13px;font-weight:700;display:none;"></div>
@@ -1592,7 +1657,7 @@ function renderSettingsPage(main){
     <!-- Tizim ma'lumotlari — o'z statistikasi -->
     <div style="background:#fff;border-radius:var(--radius-lg);border:1px solid var(--bd);overflow:hidden;margin-bottom:20px;">
       <div style="padding:14px 20px;background:var(--bg);border-bottom:1px solid var(--bd);">
-        <span style="font-size:14px;font-weight:800;color:var(--tx);">📊 Mening statistikam</span>
+        <span style="font-size:14px;font-weight:800;color:var(--tx);display:flex;align-items:center;gap:6px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/><line x1="2" y1="20" x2="22" y2="20"/></svg> Mening statistikam</span>
       </div>
       <div style="padding:20px;display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;">
         <div class="t-stat"><div class="t-stat-num">${myStudents.length}</div><div class="t-stat-lbl">O'quvchilarim</div></div>
@@ -1666,7 +1731,7 @@ function resetAllData(){
 // ── USTOZLAR BOSHQARUVI (faqat admin uchun) ──
 function renderTeachersPage(main){
   if(!currentTeacher.isAdmin){
-    main.innerHTML = `<div class="t-empty"><div class="t-empty-ico">🔒</div><div class="t-empty-title">Ruxsat yo'q</div><div class="t-empty-sub">Bu bo'lim faqat admin uchun</div></div>`;
+    main.innerHTML = `<div class="t-empty"><div class="t-empty-ico"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg></div><div class="t-empty-title">Ruxsat yo'q</div><div class="t-empty-sub">Bu bo'lim faqat admin uchun</div></div>`;
     return;
   }
   const teachers = DB.getUsers().filter(u=>u.role==='teacher'&&!u.isAdmin);
@@ -1685,7 +1750,7 @@ function renderTeachersPage(main){
       <td style="font-size:13px;color:var(--mt);">${DB.getGroups().filter(g=>g.teacherId===t.id).length} ta guruh</td>
       <td>
         <div style="display:flex;gap:6px;">
-          <button class="t-btn t-btn-secondary t-btn-sm" onclick="editTeacherModal('${t.id}')">✏️ Tahrirlash</button>
+          <button class="t-btn t-btn-secondary t-btn-sm" onclick="editTeacherModal('${t.id}')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> Tahrirlash</button>
           <button class="t-btn t-btn-danger t-btn-sm" onclick="deleteTeacher('${t.id}')">O'chirish</button>
         </div>
       </td>
@@ -1705,7 +1770,7 @@ function renderTeachersPage(main){
 
     <div style="background:#fff;border-radius:var(--radius-lg);border:1px solid var(--bd);overflow:hidden;margin-bottom:20px;">
       <div style="padding:14px 20px;background:var(--bg);border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:10px;">
-        <span style="font-size:14px;font-weight:800;color:var(--tx);">👑 Admin (Siz)</span>
+        <span style="font-size:14px;font-weight:800;color:var(--tx);display:flex;align-items:center;gap:6px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;"><path d="M2 4l3 12h14l3-12-6 7-4-7-4 7-6-7z"/><path d="M5 16h14"/></svg> Admin (Siz)</span>
       </div>
       <div style="padding:16px 20px;display:flex;align-items:center;gap:12px;">
         <div class="t-student-av" style="background:linear-gradient(135deg,var(--or),var(--or2));width:42px;height:42px;font-size:18px;">${(currentTeacher.name||currentTeacher.username).charAt(0).toUpperCase()}</div>
@@ -1719,11 +1784,11 @@ function renderTeachersPage(main){
 
     <div style="background:#fff;border-radius:var(--radius-lg);border:1px solid var(--bd);overflow:hidden;">
       <div style="padding:14px 20px;background:var(--bg);border-bottom:1px solid var(--bd);">
-        <span style="font-size:14px;font-weight:800;color:var(--tx);">👨‍🏫 Qo'shimcha ustozlar (${teachers.length} ta)</span>
+        <span style="font-size:14px;font-weight:800;color:var(--tx);">Qo'shimcha ustozlar (${teachers.length} ta)</span>
       </div>
       ${teachers.length===0
         ? `<div class="t-empty" style="padding:32px;">
-            <div class="t-empty-ico" style="font-size:36px;">👨‍🏫</div>
+            <div class="t-empty-ico"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg></div>
             <div class="t-empty-title">Hali ustoz qo'shilmagan</div>
             <div class="t-empty-sub">Yuqoridagi tugma orqali yangi ustoz qo'shing</div>
            </div>`
@@ -1819,7 +1884,7 @@ function saveTeacherModal(){
     users[idx].password = password;
     DB.saveUsers(users);
     closeModal('modalAddTeacher');
-    showNotif(`✅ ${name} ma'lumotlari yangilandi`);
+    showNotif(`${name} ma'lumotlari yangilandi ✓`);
   } else {
     // Yangi ustoz
     const dup = users.find(u=>u.username===username);
@@ -1833,7 +1898,7 @@ function saveTeacherModal(){
     users.push(newTeacher);
     DB.saveUsers(users);
     closeModal('modalAddTeacher');
-    showNotif(`✅ ${name} ustoz sifatida qo'shildi`);
+    showNotif(`${name} ustoz sifatida qo'shildi ✓`);
   }
   updateNavBadges();
   renderTeachersPage(document.getElementById('teacherMain'));
@@ -1866,7 +1931,7 @@ async function renderLivePage(main){
   main.innerHTML = `
     <div class="t-page-title">Jonli Progress</div>
     <div class="t-page-sub">Google Sheets dan real vaqtda yuklanmoqda...</div>
-    <div style="text-align:center;padding:40px;color:var(--mt);">⏳ Yuklanmoqda...</div>`;
+    <div style="text-align:center;padding:40px;color:var(--mt);">Yuklanmoqda...</div>`;
 
   try {
     const [summary, details] = await Promise.all([
@@ -1936,7 +2001,7 @@ async function renderLivePage(main){
             </div>
           </div>
           <div style="text-align:right;">
-            <div style="font-size:22px;font-weight:800;color:var(--or);">⭐ ${escHtml(s.pts)}</div>
+            <div style="font-size:22px;font-weight:800;color:var(--or);"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none" style="display:inline-block;vertical-align:middle;flex-shrink:0;"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg> ${escHtml(s.pts)}</div>
             <div style="font-size:11px;color:rgba(255,255,255,.5);">${escHtml(s.totalDone)} dars · o'rtacha ${avgPct}%</div>
           </div>
         </div>
@@ -1953,7 +2018,7 @@ async function renderLivePage(main){
       <div class="t-page-title">Jonli Progress</div>
       <div class="t-page-sub" style="display:flex;align-items:center;gap:10px;">
         <span>${summary.length} o'quvchi · ${details.length} ta topshiriq natijasi</span>
-        <button class="t-btn t-btn-secondary t-btn-sm" onclick="renderLivePage(document.getElementById('teacherMain'))">🔄 Yangilash</button>
+        <button class="t-btn t-btn-secondary t-btn-sm" onclick="renderLivePage(document.getElementById('teacherMain'))"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg> Yangilash</button>
       </div>
       ${cards}
     `;
@@ -2083,7 +2148,7 @@ function renderStudentsPage(main){
             <div class="t-student-prog-txt">${p.done.size}/${totalLessons} dars (${pct}%)</div>
           </div>
         </td>
-        <td><div class="t-student-pts">⭐ ${p.pts} pts</div></td>
+        <td><div class="t-student-pts"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none" style="display:inline-block;vertical-align:middle;flex-shrink:0;"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg> ${p.pts} pts</div></td>
         <td>
           <div class="t-student-actions">
             <button class="t-btn t-btn-secondary t-btn-sm" onclick="viewStudentDetail('${s.id}')">Ko'rish</button>
@@ -2137,7 +2202,7 @@ function openGroupDetail(groupId){
           </div>
           <div style="font-size:11px;color:var(--mt);">${p.done.size}/${totalLessons} dars</div>
         </td>
-        <td><div class="t-student-pts">⭐ ${p.pts}</div></td>
+        <td><div class="t-student-pts"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none" style="display:inline-block;vertical-align:middle;flex-shrink:0;"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg> ${p.pts}</div></td>
         <td>
           <div style="display:flex;gap:6px;">
             <button class="t-btn t-btn-secondary t-btn-sm" onclick="viewStudentDetail('${s.id}')">Batafsil</button>
@@ -2223,7 +2288,7 @@ function viewStudentDetail(studentId){
       </div>
       <div style="margin-left:auto;text-align:right;">
         <div style="font-size:28px;font-weight:800;color:var(--or);">${pct}%</div>
-        <div style="font-size:12px;color:var(--mt);">${p.done.size}/${totalLessons} dars • ⭐ ${p.pts} pts</div>
+        <div style="font-size:12px;color:var(--mt);">${p.done.size}/${totalLessons} dars &nbsp;<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none" style="display:inline-block;vertical-align:middle;flex-shrink:0;"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>&nbsp; ${p.pts} pts</div>
       </div>
     </div>
     <div style="background:#fff;border-radius:var(--radius);border:1px solid var(--bd);overflow:hidden;margin-bottom:16px;">
@@ -2259,7 +2324,7 @@ function createGroup(){
   DB.saveGroups(groups);
   closeModal('modalCreateGroup');
   document.getElementById('newGroupName').value = '';
-  showNotif(`✅ "${name}" guruhi yaratildi`);
+  showNotif(`"${name}" guruhi yaratildi ✓`);
   updateNavBadges();
   showTeacherPage('groups');
 }
@@ -2304,7 +2369,7 @@ function addStudent(){
   document.getElementById('newStudentUser').value = '';
   document.getElementById('newStudentPass').value = '';
   
-  showNotif(`✅ ${name} qo'shildi`);
+  showNotif(`${name} qo'shildi ✓`);
   updateNavBadges();
 }
 
@@ -2391,45 +2456,48 @@ function applySetupCode(){
     if(msg){ msg.style.color='var(--tl)'; msg.textContent = `✓ ${added} ta akkaunt qo'shildi! Endi login qiling.`; }
     if(added > 0) showNotif && showNotif(`${added} ta akkaunt qo'shildi!`);
   } catch(e) {
-    if(msg){ msg.style.color='var(--rd)'; msg.textContent = '✗ Noto\'g\'ri kod. Qayta tekshiring.'; }
+    if(msg){ msg.style.color='var(--rd)'; msg.textContent = 'Noto\'g\'ri kod. Qayta tekshiring.'; }
   }
 }
 
 function saveCloudApiKey(){
-  const keyInp = document.getElementById('cloudApiKey');
-  const binInp = document.getElementById('cloudBinId');
+  const urlInp = document.getElementById('cloudSupaUrl');
+  const keyInp = document.getElementById('cloudSupaKey');
   const msg = document.getElementById('cloudSyncMsg');
+  const url = urlInp ? urlInp.value.trim().replace(/\/$/, '') : '';
   const key = keyInp ? keyInp.value.trim() : '';
-  const binId = binInp ? binInp.value.trim() : '';
-  if(!key){ if(msg){ msg.style.color='var(--rd)'; msg.textContent='✗ API kalitni kiriting!'; } return; }
-  setCloudCfg({ apiKey: key, binId: binId || getCloudCfg().binId || '' });
+  if(!url||!key){
+    if(msg){ msg.style.color='var(--rd)'; msg.textContent='URL va API kalitni kiriting!'; }
+    return;
+  }
+  setSupaCfg({ url, key });
   if(msg){ msg.style.color='var(--tl)'; msg.textContent='✓ Saqlandi!'; setTimeout(()=>msg.textContent='',2500); }
-  showNotif('Cloud sozlamalari saqlandi');
+  showNotif('Supabase sozlamalari saqlandi');
 }
 
 async function testCloudSync(){
   const msg = document.getElementById('cloudSyncMsg');
-  if(!CLOUD.hasConfig()){ 
-    if(msg){ msg.style.color='var(--rd)'; msg.textContent='✗ Avval API kaliti va Bin ID kiriting!'; }
+  if(!SUPA.hasConfig()){
+    if(msg){ msg.style.color='var(--rd)'; msg.textContent='Avval URL va API kalitni kiriting!'; }
     return;
   }
-  if(msg){ msg.style.color='var(--mt)'; msg.textContent='⏳ Tekshirilmoqda...'; }
-  const ok = await CLOUD.pull();
+  if(msg){ msg.style.color='var(--mt)'; msg.textContent='Tekshirilmoqda...'; }
+  const ok = await SUPA.pull();
   if(msg){
-    if(ok){ msg.style.color='var(--tl)'; msg.textContent='✓ JSONBin ga ulandi! Ma\'lumotlar yangilandi.'; }
-    else { msg.style.color='var(--rd)'; msg.textContent='✗ Ulanmadi. API kalit va Bin ID ni tekshiring.'; }
+    if(ok){ msg.style.color='var(--tl)'; msg.textContent='✓ Supabase ga ulandi! Ma\'lumotlar yangilandi.'; }
+    else { msg.style.color='var(--rd)'; msg.textContent='Ulanmadi. URL va anon key ni tekshiring.'; }
   }
 }
 
 async function pushCloudNow(){
   const msg = document.getElementById('cloudSyncMsg');
-  if(!CLOUD.hasConfig()){ 
-    if(msg){ msg.style.color='var(--rd)'; msg.textContent='✗ Cloud sozlanmagan!'; }
+  if(!SUPA.hasConfig()){
+    if(msg){ msg.style.color='var(--rd)'; msg.textContent='Supabase sozlanmagan!'; }
     return;
   }
-  if(msg){ msg.style.color='var(--mt)'; msg.textContent='⏳ Yuklanmoqda...'; }
-  const ok = await CLOUD.push();
-  if(msg){ msg.style.color=ok?'var(--tl)':'var(--rd)'; msg.textContent=ok?'✓ Cloud ga yuklandi!':'✗ Xato yuz berdi.'; setTimeout(()=>msg.textContent='',3000); }
+  if(msg){ msg.style.color='var(--mt)'; msg.textContent='Yuklanmoqda...'; }
+  const ok = await SUPA.push();
+  if(msg){ msg.style.color=ok?'var(--tl)':'var(--rd)'; msg.textContent=ok?'Supabase ga yuklandi!':'Xato yuz berdi.'; setTimeout(()=>msg.textContent='',3000); }
 }
 
 // Eski funksiyalar uchun alias
@@ -2535,19 +2603,11 @@ function closeSB(){document.getElementById('sb').classList.remove('open');docume
 function showApiKeyScreen(){
   document.getElementById('loginScreen').style.display = 'none';
   document.getElementById('apiKeyScreen').style.display = 'flex';
-  const cfg = getCloudCfg();
-  const ki = document.getElementById('jsonBinKeyInput');
-  const bi = document.getElementById('jsonBinIdExisting');
-  if(ki) ki.value = cfg.apiKey || '';
-  if(bi) bi.value = cfg.binId || '';
-  if(cfg.binId){
-    const bg = document.getElementById('binIdGroup');
-    const eg = document.getElementById('existingBinGroup');
-    const inp = document.getElementById('jsonBinIdInput');
-    if(bg){ bg.style.display='block'; }
-    if(inp){ inp.value = cfg.binId; }
-    if(eg){ eg.style.display='none'; }
-  }
+  const cfg = getSupaCfg();
+  const ui = document.getElementById('supaUrlInput');
+  const ki = document.getElementById('supaKeyInput');
+  if(ui) ui.value = cfg.url || '';
+  if(ki) ki.value = cfg.key || '';
 }
 
 function skipCloudSetup(){
@@ -2558,99 +2618,53 @@ function skipCloudSetup(){
 }
 
 async function saveApiKeyAndContinue(){
-  const keyInp = document.getElementById('jsonBinKeyInput');
-  const existingBinInp = document.getElementById('jsonBinIdExisting');
+  const urlInp = document.getElementById('supaUrlInput');
+  const keyInp = document.getElementById('supaKeyInput');
+  const url = urlInp ? urlInp.value.trim().replace(/\/$/, '') : '';
   const key = keyInp ? keyInp.value.trim() : '';
-  const existingBin = existingBinInp ? existingBinInp.value.trim() : '';
   const err = document.getElementById('apiKeyErr');
   const btn = document.getElementById('apiKeySaveBtn');
 
-  if(!key){ 
-    if(err){ err.style.display='block'; err.textContent='JSONBin Master Key kiriting!'; }
+  if(!url || !key){
+    if(err){ err.style.display='block'; err.textContent='Project URL va Anon Key ni kiriting!'; }
     return;
   }
 
-  if(btn){ btn.disabled = true; btn.textContent = '⏳ Sozlanmoqda...'; }
+  if(btn){ btn.disabled=true; btn.textContent='Ulanmoqda...'; }
   if(err){ err.style.display='none'; }
 
-  let binId = existingBin;
+  setSupaCfg({ url, key });
 
-  // Bin ID yo'q bo'lsa — yangi yaratamiz
-  if(!binId){
-    binId = await CLOUD.createBin(key);
-    if(!binId){
-      if(err){ err.style.display='block'; err.textContent='✗ Bin yaratilmadi. API kalitni tekshiring.'; }
-      if(btn){ btn.disabled = false; btn.textContent = '☁️ Sozlashni boshlash →'; }
-      return;
-    }
-  }
-
-  // Konfiguratsiyani saqlaymiz
-  setCloudCfg({ apiKey: key, binId: binId });
-
-  // Bin ID ni ko'rsatamiz
-  const bg = document.getElementById('binIdGroup');
-  const binInp = document.getElementById('jsonBinIdInput');
-  const eg = document.getElementById('existingBinGroup');
-  if(bg){ bg.style.display = 'block'; }
-  if(binInp){ binInp.value = binId; }
-  if(eg){ eg.style.display = 'none'; }
-
-  // Cloud dan ma'lumot yuklash
-  const ok = await CLOUD.pull();
+  const ok = await SUPA.pull();
   initDefaultData();
 
-  if(btn){ btn.disabled = false; btn.textContent = '☁️ Sozlashni boshlash →'; }
+  if(btn){ btn.disabled=false; btn.textContent='Ulanish va saqlash →'; }
 
-  // Login sahifasiga o'tamiz
-  document.getElementById('apiKeyScreen').style.display = 'none';
-  document.getElementById('loginScreen').style.display = 'flex';
+  document.getElementById('apiKeyScreen').style.display='none';
+  document.getElementById('loginScreen').style.display='flex';
 
   const sub = document.getElementById('loginSubMsg');
   if(sub){
-    sub.textContent = ok ? '✅ Cloud ga ulandi! Kiring.' : '⚠️ Mahalliy rejimda ishlaydi.';
+    sub.textContent = ok ? 'Supabase ga ulandi. Kiring!' : 'Ulanmadi — lokal rejimda ishlaydi.';
   }
 }
 
 async function initApp(){
-  const cfg = getCloudCfg();
+  const cfg = getSupaCfg();
   const loginBtn = document.getElementById('loginBtn');
   const loginSub = document.getElementById('loginSubMsg');
 
-  // API key bor lekin Bin ID yo'q — avtomatik bin yaratamiz
-  const isPlaceholder = !cfg.apiKey || cfg.apiKey === 'YOUR_JSONBIN_MASTER_KEY';
-
-  if(isPlaceholder){
-    // API key kiritilmagan — lokal rejim
-    CLOUD._useLocalCache();
-    initDefaultData();
-  } else if(cfg.apiKey && !cfg.binId){
-    // API key bor, Bin ID yo'q — yangi bin yaratamiz
-    if(loginSub) loginSub.textContent = '⏳ Birinchi marta sozlanmoqda...';
+  if(cfg.url && cfg.key){
+    if(loginSub) loginSub.textContent = 'Ma\'lumotlar yuklanmoqda...';
     if(loginBtn) loginBtn.disabled = true;
 
-    const newBinId = await CLOUD.createBin(cfg.apiKey);
-    if(newBinId){
-      setCloudCfg({ apiKey: cfg.apiKey, binId: newBinId });
-      if(loginSub) loginSub.textContent = '✅ Cloud sozlandi! Bin ID: ' + newBinId;
-    } else {
-      if(loginSub) loginSub.textContent = '⚠️ Bin yaratilmadi, lokal rejimda ishlaydi';
-    }
-    CLOUD._useLocalCache();
-    initDefaultData();
-    if(loginBtn) loginBtn.disabled = false;
-  } else if(cfg.apiKey && cfg.binId){
-    // Hamma narsa bor — yuklaymiz
-    if(loginSub) loginSub.textContent = '⏳ Ma\'lumotlar yuklanmoqda...';
-    if(loginBtn) loginBtn.disabled = true;
-
-    const ok = await CLOUD.pull();
+    const ok = await SUPA.pull();
     initDefaultData();
 
-    if(loginSub) loginSub.textContent = ok ? '✅ Cloud ga ulandi. Kiring!' : 'O\'qituvchi yoki o\'quvchi sifatida kiring';
+    if(loginSub) loginSub.textContent = ok ? 'Supabase ga ulandi. Kiring!' : 'O\'qituvchi yoki o\'quvchi sifatida kiring';
     if(loginBtn) loginBtn.disabled = false;
   } else {
-    CLOUD._useLocalCache();
+    SUPA._useLocalCache();
     initDefaultData();
   }
 
