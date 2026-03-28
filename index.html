@@ -1445,15 +1445,85 @@ function showTeacherPage(page){
 
 // ── SOZLAMALAR SAHIFASI ──
 function renderSettingsPage(main){
-  const users = DB.getUsers();
-  const teacher = users.find(u=>u.role==='teacher') || {};
-  const stuCount = users.filter(u=>u.role==='student').length;
-  const grpCount = DB.getGroups().length;
+  const allGroups = DB.getGroups();
+  // currentTeacher.id bo'yicha topamiz — birinchi teacher emas!
+  const teacher = currentTeacher;
+  const myGroups = currentTeacher.isAdmin
+    ? allGroups
+    : allGroups.filter(g=>g.teacherId===currentTeacher.id);
+  const allUsers = DB.getUsers();
+  const myStudents = allUsers.filter(u=>{
+    if(u.role!=='student') return false;
+    if(currentTeacher.isAdmin) return true;
+    const grp = allGroups.find(g=>g.id===u.groupId);
+    return grp && grp.teacherId===currentTeacher.id;
+  });
   const totalLessons = UNITS.reduce((a,u)=>a+u.lessons.length,0);
+
+  const cloudSection = currentTeacher.isAdmin ? `
+    <!-- Cloud sinxronizatsiya sozlamasi — faqat admin -->
+    <div style="background:#fff;border-radius:var(--radius-lg);border:1px solid var(--bd);overflow:hidden;margin-bottom:20px;">
+      <div style="padding:14px 20px;background:linear-gradient(135deg,#1A2F4A,#1e3a5f);border-bottom:1px solid var(--bd);">
+        <span style="font-size:14px;font-weight:800;color:#fff;">☁️ Cloud sinxronizatsiya</span>
+      </div>
+      <div style="padding:20px;">
+        <div style="font-size:13px;color:var(--tx);margin-bottom:16px;padding:12px 16px;background:${CLOUD.hasConfig()?'var(--tl3)':'var(--rd2)'};border-radius:8px;border:1px solid ${CLOUD.hasConfig()?'rgba(5,150,105,.2)':'rgba(220,38,38,.2)'};">
+          <strong>${CLOUD.hasConfig()?'✅ Cloud yoqilgan':'❌ Cloud o\'chirilgan'}</strong> — ${CLOUD.hasConfig()?'Bin ID: '+escHtml(getCloudCfg().binId||''):'JSONBin.io da bepul hisob oching va quyida kiriting'}
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;">
+          <div class="form-group" style="margin:0;">
+            <label class="form-label">JSONBin Master Key</label>
+            <input class="form-input" id="cloudApiKey" type="password" value="${escHtml(getCloudCfg().apiKey||'')}" placeholder="$2a$10$..." style="font-family:'JetBrains Mono',monospace;font-size:11px;">
+          </div>
+          <div class="form-group" style="margin:0;">
+            <label class="form-label">Bin ID</label>
+            <input class="form-input" id="cloudBinId" value="${escHtml(getCloudCfg().binId||'')}" placeholder="64abc123..." style="font-family:'JetBrains Mono',monospace;font-size:11px;">
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+          <button class="t-btn t-btn-primary" onclick="saveCloudApiKey()">Saqlash</button>
+          <button class="t-btn t-btn-secondary" onclick="testCloudSync()">🔄 Ulanishni tekshirish</button>
+          <button class="t-btn t-btn-secondary" onclick="pushCloudNow()">⬆️ Hozir yuklash</button>
+        </div>
+        <div id="cloudSyncMsg" style="margin-top:10px;font-size:13px;font-weight:600;"></div>
+      </div>
+    </div>
+
+    <!-- Xavfli zona — faqat admin -->
+    <div style="background:#fff;border-radius:var(--radius-lg);border:1.5px solid var(--rd2);overflow:hidden;margin-bottom:20px;">
+      <div style="padding:14px 20px;background:var(--rd2);border-bottom:1px solid rgba(220,38,38,.15);">
+        <span style="font-size:14px;font-weight:800;color:var(--rd);">⚠️ Xavfli zona</span>
+      </div>
+      <div style="padding:20px;display:flex;align-items:center;justify-content:space-between;gap:16px;">
+        <div>
+          <div style="font-size:14px;font-weight:700;color:var(--tx);">Barcha ma'lumotlarni o'chirish</div>
+          <div style="font-size:12px;color:var(--mt);margin-top:2px;">Barcha o'quvchilar, guruhlar va progresslar o'chadi. Bu amalni qaytarib bo'lmaydi!</div>
+        </div>
+        <button class="t-btn t-btn-danger" onclick="resetAllData()" style="flex-shrink:0;">🗑️ Hammani o'chirish</button>
+      </div>
+    </div>
+
+    <!-- Setup kodi — faqat admin -->
+    <div style="background:#fff;border-radius:var(--radius-lg);border:1px solid var(--bd);overflow:hidden;margin-bottom:20px;">
+      <div style="padding:14px 20px;background:var(--bg);border-bottom:1px solid var(--bd);">
+        <span style="font-size:14px;font-weight:800;color:var(--tx);">📋 O'quvchilar uchun Setup kodi</span>
+      </div>
+      <div style="padding:20px;">
+        <div style="font-size:13px;color:var(--mt);margin-bottom:14px;">
+          O'quvchilar boshqa qurilmada ochganida Setup kodi orqali kirishlari mumkin.
+        </div>
+        <button class="t-btn t-btn-primary" onclick="generateSetupCode()" style="margin-bottom:12px;">📋 Setup kodini yaratish</button>
+        <div id="setupCodeResult" style="display:none;">
+          <textarea id="setupCodeText" readonly style="width:100%;min-height:100px;padding:10px;border:2px solid var(--bl2);border-radius:8px;font-size:11px;font-family:'JetBrains Mono',monospace;background:var(--bl3);color:var(--bl);resize:vertical;cursor:pointer;" onclick="this.select();document.execCommand('copy');showNotif('Kod nusxalandi!');" title="Bosing — nusxalanadi"></textarea>
+          <div style="font-size:11px;color:var(--mt);margin-top:6px;">👆 Bosing — avtomatik nusxalanadi.</div>
+        </div>
+      </div>
+    </div>
+  ` : '';
 
   main.innerHTML = `
     <div class="t-page-title">Sozlamalar</div>
-    <div class="t-page-sub">O'qituvchi profili va tizim sozlamalari</div>
+    <div class="t-page-sub">Profilingizni boshqaring</div>
 
     <!-- Profil kartasi -->
     <div style="background:#fff;border-radius:var(--radius-lg);border:1px solid var(--bd);overflow:hidden;margin-bottom:20px;">
@@ -1466,9 +1536,10 @@ function renderSettingsPage(main){
             ${(teacher.name||teacher.username||'T').charAt(0).toUpperCase()}
           </div>
           <div>
-            <div style="font-size:18px;font-weight:800;color:var(--tx);" id="settingsName">${escHtml(teacher.name||teacher.username||'Oquvitchi')}</div>
-            <div style="font-size:13px;color:var(--mt);">@${escHtml(teacher.username||'teacher')} · O'qituvchi</div>
+            <div style="font-size:18px;font-weight:800;color:var(--tx);" id="settingsName">${escHtml(teacher.name||teacher.username||'Ustoz')}</div>
+            <div style="font-size:13px;color:var(--mt);">@${escHtml(teacher.username||'')} · ${teacher.isAdmin?'Admin':'O\'qituvchi'}</div>
           </div>
+          ${teacher.isAdmin ? '<span style="margin-left:auto;background:var(--or);color:#fff;border-radius:99px;padding:4px 14px;font-size:11px;font-weight:800;">ADMIN</span>' : ''}
         </div>
 
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px;">
@@ -1478,13 +1549,12 @@ function renderSettingsPage(main){
           </div>
           <div class="form-group" style="margin:0;">
             <label class="form-label">Login (o'zgarmaydi)</label>
-            <input class="form-input" value="${escHtml(teacher.username||'teacher')}" disabled style="opacity:.6;cursor:not-allowed;">
+            <input class="form-input" value="${escHtml(teacher.username||'')}" disabled style="opacity:.6;cursor:not-allowed;">
           </div>
         </div>
-
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px;">
           <div class="form-group" style="margin:0;">
-            <label class="form-label">Yangi parol (bosh qoldirsangiz ozgarmaydi)</label>
+            <label class="form-label">Yangi parol (bo'sh qoldirsangiz o'zgarmaydi)</label>
             <input class="form-input" id="settPassInput" type="password" placeholder="Yangi parol kiriting">
           </div>
           <div class="form-group" style="margin:0;">
@@ -1492,97 +1562,28 @@ function renderSettingsPage(main){
             <input class="form-input" id="settPassConfirm" type="password" placeholder="Parolni qayta kiriting">
           </div>
         </div>
-
         <div style="display:flex;gap:10px;">
-          <button class="t-btn t-btn-primary" onclick="saveTeacherProfile()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Saqlash</button>
+          <button class="t-btn t-btn-primary" onclick="saveTeacherProfile()">💾 Saqlash</button>
           <button class="t-btn t-btn-secondary" onclick="showTeacherPage('dashboard')">Bekor qilish</button>
         </div>
         <div id="settNotif" style="margin-top:12px;padding:10px 14px;border-radius:8px;font-size:13px;font-weight:700;display:none;"></div>
       </div>
     </div>
 
-
-    <!-- Cloud sinxronizatsiya sozlamasi -->
-    <div style="background:#fff;border-radius:var(--radius-lg);border:1px solid var(--bd);overflow:hidden;margin-bottom:20px;">
-      <div style="padding:14px 20px;background:linear-gradient(135deg,#1A2F4A,#1e3a5f);border-bottom:1px solid var(--bd);">
-        <span style="font-size:14px;font-weight:800;color:#fff;">☁️ Cloud sinxronizatsiya (barcha qurilmalarda ishlaydi)</span>
-      </div>
-      <div style="padding:20px;">
-        <div style="font-size:13px;color:var(--tx);margin-bottom:16px;padding:12px 16px;background:${CLOUD.hasConfig()?String('var(--tl3)'):String('var(--rd2)')};border-radius:8px;border:1px solid ${CLOUD.hasConfig()?String('rgba(5,150,105,.2)'):String('rgba(220,38,38,.2)')};">
-          <strong>${CLOUD.hasConfig()?String('✅ Cloud yoqilgan'):String('❌ Cloud o\u2019chirilgan')}</strong> — ${CLOUD.hasConfig()?String('Bin ID: ')+escHtml(getCloudCfg().binId||''):String('JSONBin.io da bepul hisob oching va quyida kiriting')}
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;">
-          <div class="form-group" style="margin:0;">
-            <label class="form-label">JSONBin Master Key</label>
-            <input class="form-input" id="cloudApiKey" type="password" value="${escHtml(getCloudCfg().apiKey||'')}" placeholder="$2a$10$..." style="font-family:'JetBrains Mono',monospace;font-size:11px;">
-          </div>
-          <div class="form-group" style="margin:0;">
-            <label class="form-label">Bin ID</label>
-            <input class="form-input" id="cloudBinId" value="${escHtml(getCloudCfg().binId||'')}" placeholder="64abc123..." style="font-family:'JetBrains Mono',monospace;font-size:11px;">
-          </div>
-        </div>
-        <div style="font-size:11px;color:var(--mt);margin-bottom:14px;">
-          📌 <a href="https://jsonbin.io" target="_blank" style="color:var(--bl2);">jsonbin.io</a> ga kiring → Bepul hisob → Dashboard → API Keys → Master Key. Har bir qurilmada bir marta kiriting.
-        </div>
-        <div style="display:flex;gap:10px;flex-wrap:wrap;">
-          <button class="t-btn t-btn-primary" onclick="saveCloudApiKey()">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-            Saqlash
-          </button>
-          <button class="t-btn t-btn-secondary" onclick="testCloudSync()">🔄 Ulanishni tekshirish</button>
-          <button class="t-btn t-btn-secondary" onclick="pushCloudNow()">⬆️ Hozir yuklash</button>
-        </div>
-        <div id="cloudSyncMsg" style="margin-top:10px;font-size:13px;font-weight:600;"></div>
-      </div>
-    </div>
-
-    <!-- Tizim ma'lumotlari -->
+    <!-- Tizim ma'lumotlari — o'z statistikasi -->
     <div style="background:#fff;border-radius:var(--radius-lg);border:1px solid var(--bd);overflow:hidden;margin-bottom:20px;">
       <div style="padding:14px 20px;background:var(--bg);border-bottom:1px solid var(--bd);">
-        <span style="font-size:14px;font-weight:800;color:var(--tx);">📊 Tizim ma'lumotlari</span>
+        <span style="font-size:14px;font-weight:800;color:var(--tx);">📊 Mening statistikam</span>
       </div>
       <div style="padding:20px;display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;">
-        <div class="t-stat"><div class="t-stat-num">${stuCount}</div><div class="t-stat-lbl">Jami o'quvchilar</div></div>
-        <div class="t-stat"><div class="t-stat-num">${grpCount}</div><div class="t-stat-lbl">Guruhlar</div></div>
+        <div class="t-stat"><div class="t-stat-num">${myStudents.length}</div><div class="t-stat-lbl">O'quvchilarim</div></div>
+        <div class="t-stat"><div class="t-stat-num">${myGroups.length}</div><div class="t-stat-lbl">Guruhlarim</div></div>
         <div class="t-stat"><div class="t-stat-num">${UNITS.length}</div><div class="t-stat-lbl">Units</div></div>
         <div class="t-stat"><div class="t-stat-num">${totalLessons}</div><div class="t-stat-lbl">Jami darslar</div></div>
       </div>
     </div>
 
-    <!-- Xavfli zona -->
-    <div style="background:#fff;border-radius:var(--radius-lg);border:1.5px solid var(--rd2);overflow:hidden;">
-      <div style="padding:14px 20px;background:var(--rd2);border-bottom:1px solid rgba(220,38,38,.15);">
-        <span style="font-size:14px;font-weight:800;color:var(--rd);">⚠️ Xavfli zona</span>
-      </div>
-      <div style="padding:20px;display:flex;align-items:center;justify-content:space-between;gap:16px;">
-        <div>
-          <div style="font-size:14px;font-weight:700;color:var(--tx);">Barcha ma'lumotlarni o'chirish</div>
-          <div style="font-size:12px;color:var(--mt);margin-top:2px;">Barcha o'quvchilar, guruhlar va progresslar o'chadi. Bu amalni qaytarib bo'lmaydi!</div>
-        </div>
-        <button class="t-btn t-btn-danger" onclick="resetAllData()" style="flex-shrink:0;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg> Hammani o'chirish</button>
-      </div>
-    </div>
-
-    <!-- Setup kodi -->
-    <div style="background:#fff;border-radius:var(--radius-lg);border:1px solid var(--bd);overflow:hidden;margin-top:20px;">
-      <div style="padding:14px 20px;background:var(--bg);border-bottom:1px solid var(--bd);">
-        <span style="font-size:14px;font-weight:800;color:var(--tx);">📋 O'quvchilar uchun Setup kodi</span>
-      </div>
-      <div style="padding:20px;">
-        <div style="font-size:13px;color:var(--mt);margin-bottom:14px;">
-          O'quvchilar boshqa qurilmada (telefon, kompyuter) ochganida ularning akkauntlari bo'lmaydi. 
-          Quyidagi <strong>Setup kodi</strong>ni o'quvchilarga yuboring — ular login sahifasida "Setup kodi" tugmasini bosib, kodni joylashtiradi va kirishi mumkin bo'ladi.
-        </div>
-        <button class="t-btn t-btn-primary" onclick="generateSetupCode()" style="margin-bottom:12px;">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
-          Setup kodini yaratish
-        </button>
-        <div id="setupCodeResult" style="display:none;">
-          <textarea id="setupCodeText" readonly style="width:100%;min-height:100px;padding:10px;border:2px solid var(--bl2);border-radius:8px;font-size:11px;font-family:'JetBrains Mono',monospace;background:var(--bl3);color:var(--bl);resize:vertical;cursor:pointer;" onclick="this.select();document.execCommand('copy');showNotif('Kod nusxalandi!');" title="Bosing — nusxalanadi"></textarea>
-          <div style="font-size:11px;color:var(--mt);margin-top:6px;">👆 Matn ustiga bosing — avtomatik nusxalanadi. Telegram/WhatsApp orqali o'quvchilarga yuboring.</div>
-        </div>
-      </div>
-    </div>
+    ${cloudSection}
   `;
 }
 
