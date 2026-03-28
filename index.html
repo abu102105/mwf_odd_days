@@ -746,6 +746,12 @@ html,body{
         📡 Jonli Progress
       </div>
       <div class="t-nav-sec">Tizim</div>
+      <div class="t-nav-item" id="navTeachers" onclick="showTeacherPage('teachers')" style="display:none;">
+        <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+        Ustozlar boshqaruvi
+        <span class="t-nav-badge" id="teachersBadge">0</span>
+      </div>
+      <div class="t-nav-sec">Sozlamalar</div>
       <div class="t-nav-item" id="navSettings" onclick="showTeacherPage('settings')">
         <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
         Sozlamalar
@@ -774,6 +780,9 @@ html,body{
     </button>
     <button class="t-bn-item" id="tbn-live" onclick="showTeacherPage('live');tBotActive('tbn-live')">
       <span class="t-bn-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="2"/><path d="M16.24 7.76a6 6 0 010 8.49M7.76 7.76a6 6 0 000 8.49M19.07 4.93a10 10 0 010 14.14M4.93 4.93a10 10 0 000 14.14"/></svg></span><span>Jonli</span>
+    </button>
+    <button class="t-bn-item" id="tbn-teachers" onclick="showTeacherPage('teachers');tBotActive('tbn-teachers')" style="display:none;">
+      <span class="t-bn-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg></span><span>Ustozlar</span>
     </button>
     <button class="t-bn-item" id="tbn-settings" onclick="showTeacherPage('settings');tBotActive('tbn-settings')">
       <span class="t-bn-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg></span><span>Sozlama</span>
@@ -1322,8 +1331,16 @@ function saveGH(){}
 // Init default teacher if no users exist
 function initDefaultData(){
   let users = DB.getUsers();
-  if(!users.find(u=>u.role==='teacher')){
-    users.push({id:'teacher_1',username:'teacher',password:'123456',role:'teacher',name:'O\'qituvchi'});
+  const adminExists = users.find(u=>u.role==='teacher'&&u.isAdmin);
+  if(!adminExists){
+    // eski teacher bor bo'lsa uni admin qilamiz
+    const idx = users.findIndex(u=>u.role==='teacher');
+    if(idx>=0){
+      users[idx].isAdmin = true;
+      users[idx].id = users[idx].id || 'teacher_1';
+    } else {
+      users.push({id:'teacher_1',username:'teacher',password:'123456',role:'teacher',name:'O\'qituvchi (Admin)',isAdmin:true});
+    }
     DB.saveUsers(users);
   }
 }
@@ -1376,20 +1393,29 @@ function initTeacherPanel(user){
   currentTeacher = user;
   document.getElementById('tUserAv').textContent = (user.name||user.username).charAt(0).toUpperCase();
   document.getElementById('tUserName').textContent = user.name || user.username;
+  // Admin uchun "Ustozlar boshqaruvi" tabini ko'rsatish
+  const navT = document.getElementById('navTeachers');
+  if(navT) navT.style.display = user.isAdmin ? 'flex' : 'none';
+  const mnavT = document.getElementById('tbn-teachers');
+  if(mnavT) mnavT.style.display = user.isAdmin ? 'flex' : 'none';
   showTeacherPage('dashboard');
   updateNavBadges();
 }
 
 function updateNavBadges(){
-  const groups = DB.getGroups().filter(g=>g.teacherId===currentTeacher.id);
+  const allGroups = DB.getGroups();
+  const groups = currentTeacher.isAdmin ? allGroups : allGroups.filter(g=>g.teacherId===currentTeacher.id);
   const users = DB.getUsers().filter(u=>u.role==='student');
+  const teachers = DB.getUsers().filter(u=>u.role==='teacher'&&!u.isAdmin);
   document.getElementById('groupsBadge').textContent = groups.length;
   document.getElementById('studentsBadge').textContent = users.length;
+  const tb = document.getElementById('teachersBadge');
+  if(tb) tb.textContent = teachers.length;
 }
 
 function showTeacherPage(page){
   document.querySelectorAll('.t-nav-item').forEach(n=>n.classList.remove('active'));
-  const navMap = {dashboard:'navDash', groups:'navGroups', students:'navStudents', live:'navLive', settings:'navSettings'};
+  const navMap = {dashboard:'navDash', groups:'navGroups', students:'navStudents', live:'navLive', settings:'navSettings', teachers:'navTeachers'};
   const el = document.getElementById(navMap[page]);
   if(el) el.classList.add('active');
   
@@ -1400,6 +1426,7 @@ function showTeacherPage(page){
   else if(page==='students') renderStudentsPage(main);
   else if(page==='live') renderLivePage(main);
   else if(page==='settings') renderSettingsPage(main);
+  else if(page==='teachers') renderTeachersPage(main);
 }
 
 // ── SOZLAMALAR SAHIFASI ──
@@ -1556,11 +1583,13 @@ function saveTeacherProfile(){
   if(pass && pass.length < 4){ showSettNotif("Parol kamida 4 ta belgi bolsin!", "error"); return; }
 
   let users = DB.getUsers();
-  const idx = users.findIndex(u=>u.role==='teacher');
-  if(idx === -1){ showSettNotif("Xato: oquvitchi topilmadi!", "error"); return; }
+  const idx = users.findIndex(u=>u.id===currentTeacher.id);
+  if(idx === -1){ showSettNotif("Xato: ustoz topilmadi!", "error"); return; }
 
   users[idx].name = name;
   if(pass) users[idx].password = pass;
+  currentTeacher.name = name;
+  if(pass) currentTeacher.password = pass;
   DB.saveUsers(users);
 
   // Sessiyani ham yangilaymiz
@@ -1570,8 +1599,8 @@ function saveTeacherProfile(){
   // UI ni yangilaymiz
   document.getElementById('tUserName').textContent = name;
   document.getElementById('tUserAv').textContent = name.charAt(0).toUpperCase();
-  document.getElementById('settingsAv').textContent = name.charAt(0).toUpperCase();
-  document.getElementById('settingsName').textContent = name;
+  if(document.getElementById('settingsAv')) document.getElementById('settingsAv').textContent = name.charAt(0).toUpperCase();
+  if(document.getElementById('settingsName')) document.getElementById('settingsName').textContent = name;
   document.getElementById('settPassInput').value = '';
   document.getElementById('settPassConfirm').value = '';
 
@@ -1589,18 +1618,205 @@ function showSettNotif(msg, type){
 }
 
 function resetAllData(){
-  if(!confirm('DIQQAT! Barcha oquvchilar va guruhlar ochadi!')) return;
-  const teacher = DB.getUsers().find(u=>u.role==='teacher');
+  if(!confirm('DIQQAT! Barcha o\'quvchilar va guruhlar o\'chadi!')) return;
+  const teachers = DB.getUsers().filter(u=>u.role==='teacher');
   const c = CLOUD.getCache();
-  c.users = teacher ? [teacher] : [];
+  c.users = teachers;
   c.groups = [];
   c.progress = {};
   CLOUD._schedulePush();
-  showNotif("Barcha malumotlar ochirildi");
+  showNotif("Barcha ma'lumotlar o'chirildi");
   showTeacherPage('dashboard');
 }
 
-// ── Fetch helper — no-cors muammosini hal qiladi ──
+// ── USTOZLAR BOSHQARUVI (faqat admin uchun) ──
+function renderTeachersPage(main){
+  if(!currentTeacher.isAdmin){
+    main.innerHTML = `<div class="t-empty"><div class="t-empty-ico">🔒</div><div class="t-empty-title">Ruxsat yo'q</div><div class="t-empty-sub">Bu bo'lim faqat admin uchun</div></div>`;
+    return;
+  }
+  const teachers = DB.getUsers().filter(u=>u.role==='teacher'&&!u.isAdmin);
+  const rows = teachers.map(t=>`
+    <tr>
+      <td>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div class="t-student-av" style="background:linear-gradient(135deg,var(--pu),#9333ea);">${(t.name||t.username).charAt(0).toUpperCase()}</div>
+          <div>
+            <div class="t-student-name">${escHtml(t.name||t.username)}</div>
+            <div class="t-student-user">@${escHtml(t.username)}</div>
+          </div>
+        </div>
+      </td>
+      <td style="font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--bl);">${escHtml(t.password)}</td>
+      <td style="font-size:13px;color:var(--mt);">${DB.getGroups().filter(g=>g.teacherId===t.id).length} ta guruh</td>
+      <td>
+        <div style="display:flex;gap:6px;">
+          <button class="t-btn t-btn-secondary t-btn-sm" onclick="editTeacherModal('${t.id}')">✏️ Tahrirlash</button>
+          <button class="t-btn t-btn-danger t-btn-sm" onclick="deleteTeacher('${t.id}')">O'chirish</button>
+        </div>
+      </td>
+    </tr>
+  `).join('');
+
+  main.innerHTML = `
+    <div class="t-page-title">Ustozlar boshqaruvi</div>
+    <div class="t-page-sub">Qo'shimcha ustozlarni qo'shing va boshqaring</div>
+
+    <div class="t-actions">
+      <button class="t-btn t-btn-primary" onclick="openAddTeacherModal()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Yangi ustoz qo'shish
+      </button>
+    </div>
+
+    <div style="background:#fff;border-radius:var(--radius-lg);border:1px solid var(--bd);overflow:hidden;margin-bottom:20px;">
+      <div style="padding:14px 20px;background:var(--bg);border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:10px;">
+        <span style="font-size:14px;font-weight:800;color:var(--tx);">👑 Admin (Siz)</span>
+      </div>
+      <div style="padding:16px 20px;display:flex;align-items:center;gap:12px;">
+        <div class="t-student-av" style="background:linear-gradient(135deg,var(--or),var(--or2));width:42px;height:42px;font-size:18px;">${(currentTeacher.name||currentTeacher.username).charAt(0).toUpperCase()}</div>
+        <div>
+          <div style="font-size:15px;font-weight:800;color:var(--tx);">${escHtml(currentTeacher.name||currentTeacher.username)}</div>
+          <div style="font-size:12px;color:var(--mt);">@${escHtml(currentTeacher.username)} · Admin · Barcha guruhlarga kirish huquqi</div>
+        </div>
+        <span style="margin-left:auto;background:var(--or);color:#fff;border-radius:99px;padding:4px 12px;font-size:11px;font-weight:700;">ADMIN</span>
+      </div>
+    </div>
+
+    <div style="background:#fff;border-radius:var(--radius-lg);border:1px solid var(--bd);overflow:hidden;">
+      <div style="padding:14px 20px;background:var(--bg);border-bottom:1px solid var(--bd);">
+        <span style="font-size:14px;font-weight:800;color:var(--tx);">👨‍🏫 Qo'shimcha ustozlar (${teachers.length} ta)</span>
+      </div>
+      ${teachers.length===0
+        ? `<div class="t-empty" style="padding:32px;">
+            <div class="t-empty-ico" style="font-size:36px;">👨‍🏫</div>
+            <div class="t-empty-title">Hali ustoz qo'shilmagan</div>
+            <div class="t-empty-sub">Yuqoridagi tugma orqali yangi ustoz qo'shing</div>
+           </div>`
+        : `<table class="detail-table" style="width:100%;">
+            <thead><tr><th>Ustoz</th><th>Parol</th><th>Guruhlar</th><th>Amallar</th></tr></thead>
+            <tbody>${rows}</tbody>
+           </table>`
+      }
+    </div>
+
+    <!-- Ustoz qo'shish modali -->
+    <div class="modal-bg" id="modalAddTeacher">
+      <div class="modal-card" style="max-width:440px;">
+        <div class="modal-title" id="addTeacherModalTitle">Yangi ustoz qo'shish</div>
+        <div class="modal-sub">Ustoz o'z login va paroli bilan tizimga kiradi</div>
+        <input type="hidden" id="editTeacherId" value="">
+        <div class="form-group">
+          <label class="form-label">To'liq ism-familiya</label>
+          <input class="form-input" id="newTeacherName" placeholder="Masalan: Dilnoza Karimova">
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div class="form-group" style="margin:0;">
+            <label class="form-label">Login (username)</label>
+            <input class="form-input" id="newTeacherUsername" placeholder="teacher2">
+          </div>
+          <div class="form-group" style="margin:0;">
+            <label class="form-label">Parol</label>
+            <input class="form-input" id="newTeacherPassword" type="text" placeholder="Kamida 4 belgi">
+          </div>
+        </div>
+        <div id="addTeacherErr" style="margin-top:10px;padding:8px 12px;background:var(--rd2);color:var(--rd);border-radius:8px;font-size:13px;font-weight:600;display:none;"></div>
+        <div class="modal-foot">
+          <button class="t-btn t-btn-secondary" onclick="closeModal('modalAddTeacher')">Bekor qilish</button>
+          <button class="t-btn t-btn-primary" onclick="saveTeacherModal()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+            Saqlash
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function openAddTeacherModal(){
+  document.getElementById('addTeacherModalTitle').textContent = 'Yangi ustoz qo\'shish';
+  document.getElementById('editTeacherId').value = '';
+  document.getElementById('newTeacherName').value = '';
+  document.getElementById('newTeacherUsername').value = '';
+  document.getElementById('newTeacherPassword').value = '';
+  const err = document.getElementById('addTeacherErr');
+  if(err) err.style.display = 'none';
+  openModal('modalAddTeacher');
+}
+
+function editTeacherModal(tid){
+  const t = DB.getUsers().find(u=>u.id===tid);
+  if(!t) return;
+  document.getElementById('addTeacherModalTitle').textContent = 'Ustoz ma\'lumotlarini tahrirlash';
+  document.getElementById('editTeacherId').value = tid;
+  document.getElementById('newTeacherName').value = t.name||'';
+  document.getElementById('newTeacherUsername').value = t.username||'';
+  document.getElementById('newTeacherPassword').value = t.password||'';
+  const err = document.getElementById('addTeacherErr');
+  if(err) err.style.display = 'none';
+  openModal('modalAddTeacher');
+}
+
+function saveTeacherModal(){
+  const editId = document.getElementById('editTeacherId').value.trim();
+  const name = document.getElementById('newTeacherName').value.trim();
+  const username = document.getElementById('newTeacherUsername').value.trim().toLowerCase();
+  const password = document.getElementById('newTeacherPassword').value.trim();
+  const err = document.getElementById('addTeacherErr');
+
+  if(!name||!username||!password){
+    err.textContent = 'Barcha maydonlarni to\'ldiring!'; err.style.display='block'; return;
+  }
+  if(password.length < 4){
+    err.textContent = 'Parol kamida 4 belgi bo\'lishi kerak!'; err.style.display='block'; return;
+  }
+
+  let users = DB.getUsers();
+
+  if(editId){
+    // Tahrirlash
+    const idx = users.findIndex(u=>u.id===editId);
+    if(idx===-1){ err.textContent='Ustoz topilmadi!'; err.style.display='block'; return; }
+    // Login bo'lishini tekshirish (boshqa foydalanuvchida)
+    const dup = users.find(u=>u.username===username&&u.id!==editId);
+    if(dup){ err.textContent='Bu login allaqachon band!'; err.style.display='block'; return; }
+    users[idx].name = name;
+    users[idx].username = username;
+    users[idx].password = password;
+    DB.saveUsers(users);
+    closeModal('modalAddTeacher');
+    showNotif(`✅ ${name} ma'lumotlari yangilandi`);
+  } else {
+    // Yangi ustoz
+    const dup = users.find(u=>u.username===username);
+    if(dup){ err.textContent='Bu login allaqachon band!'; err.style.display='block'; return; }
+    const newTeacher = {
+      id: 'teacher_' + Date.now(),
+      username, password, name,
+      role: 'teacher',
+      isAdmin: false
+    };
+    users.push(newTeacher);
+    DB.saveUsers(users);
+    closeModal('modalAddTeacher');
+    showNotif(`✅ ${name} ustoz sifatida qo'shildi`);
+  }
+  updateNavBadges();
+  renderTeachersPage(document.getElementById('teacherMain'));
+}
+
+function deleteTeacher(tid){
+  const t = DB.getUsers().find(u=>u.id===tid);
+  if(!t) return;
+  if(!confirm(`"${t.name||t.username}" ustozni o'chirasizmi? Uning guruhlari saqlanib qoladi.`)) return;
+  let users = DB.getUsers().filter(u=>u.id!==tid);
+  DB.saveUsers(users);
+  updateNavBadges();
+  showNotif(`${t.name||t.username} o'chirildi`);
+  renderTeachersPage(document.getElementById('teacherMain'));
+}
+
+
 async function sheetsRead(view){
   const url = SHEETS_URL + '?action=read&view=' + view;
   // no-redirect fetch — Google Apps Script redirect qiladi
@@ -1717,7 +1933,8 @@ async function renderLivePage(main){
 }
 
 function renderDashboard(main){
-  const groups = DB.getGroups().filter(g=>g.teacherId===currentTeacher.id);
+  const allGroups = DB.getGroups();
+  const groups = currentTeacher.isAdmin ? allGroups : allGroups.filter(g=>g.teacherId===currentTeacher.id);
   const students = DB.getUsers().filter(u=>u.role==='student');
   const totalLessons = UNITS.reduce((a,u)=>a+u.lessons.length,0);
   
@@ -1749,7 +1966,9 @@ function renderDashboard(main){
 }
 
 function renderGroupsPage(main){
-  const groups = DB.getGroups().filter(g=>g.teacherId===currentTeacher.id);
+  const allGroups = DB.getGroups();
+  const groups = currentTeacher.isAdmin ? allGroups : allGroups.filter(g=>g.teacherId===currentTeacher.id);
+  const allTeachers = DB.getUsers().filter(u=>u.role==='teacher');
   main.innerHTML = `
     <div class="t-page-title">Guruhlar</div>
     <div class="t-page-sub">Guruhlarni boshqaring va o'quvchilar qo'shing</div>
