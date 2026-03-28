@@ -1058,11 +1058,13 @@ function cM(k,ans,len){
   addScore(k,c,len);
 }
 function sQ(k,qi,opt,opts,ans){
-  opts.forEach(o=>{const el=document.getElementById(`qb-${k}-${qi}-${esc(o)}`);if(el)el.classList.remove('sel','cor','wr');});
+  opts.forEach(o=>{const el=document.getElementById(`qb-${k}-${qi}-${esc(o)}`);if(el)el.classList.remove('sel','cor','wr','got');});
   const el=document.getElementById(`qb-${k}-${qi}-${esc(opt)}`);
   if(!el)return;
-  if(opt===ans){el.classList.add('cor');pts++;document.getElementById('sd').innerHTML='<span class="star-ico"><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></span> '+pts+' pts';}
-  else{el.classList.add('wr');setTimeout(()=>{const ce=document.getElementById(`qb-${k}-${qi}-${esc(ans)}`);if(ce)ce.classList.add('cor');},350);}
+  if(opt===ans){
+    el.classList.add('cor','got');
+    pts++;document.getElementById('sd').innerHTML='<span class="star-ico"><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></span> '+pts+' pts';
+  }else{el.classList.add('wr');setTimeout(()=>{const ce=document.getElementById(`qb-${k}-${qi}-${esc(ans)}`);if(ce)ce.classList.add('cor');},350);}
 }
 function saF(k,i,v){if(!FA[k])FA[k]={};FA[k][i]=v.trim().toLowerCase();}
 function cF(k,ans){
@@ -1104,8 +1106,10 @@ function cQall(k, ei){
     const ans=it.answer;
     const ce=document.getElementById('qb-'+k+'-'+i+'-'+esc(ans));
     if(ce){
-      if(ce.classList.contains('cor'))c++;
-      else ce.classList.add('cor');
+      // Faqat 'got' (o'quvchi o'zi to'g'ri bosgan) ni hisoblaymiz
+      // 'cor' faqat vizual — noto'g'ri bosgandan keyin ko'rsatish uchun
+      if(ce.classList.contains('got'))c++;
+      else ce.classList.add('cor'); // javobni ko'rsatamiz, lekin hisoblamaymiz
     }
     it.options.forEach(o=>{
       if(o!==ans){
