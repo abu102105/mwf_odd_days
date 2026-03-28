@@ -1404,11 +1404,14 @@ function initTeacherPanel(user){
 
 function updateNavBadges(){
   const allGroups = DB.getGroups();
-  const groups = currentTeacher.isAdmin ? allGroups : allGroups.filter(g=>g.teacherId===currentTeacher.id);
-  const users = DB.getUsers().filter(u=>u.role==='student');
+  const myGroups = currentTeacher.isAdmin
+    ? allGroups
+    : allGroups.filter(g=>g.teacherId===currentTeacher.id);
+  const myGroupIds = new Set(myGroups.map(g=>g.id));
+  const students = DB.getUsers().filter(u=>u.role==='student' && myGroupIds.has(u.groupId));
   const teachers = DB.getUsers().filter(u=>u.role==='teacher'&&!u.isAdmin);
-  document.getElementById('groupsBadge').textContent = groups.length;
-  document.getElementById('studentsBadge').textContent = users.length;
+  document.getElementById('groupsBadge').textContent = myGroups.length;
+  document.getElementById('studentsBadge').textContent = students.length;
   const tb = document.getElementById('teachersBadge');
   if(tb) tb.textContent = teachers.length;
 }
@@ -1935,7 +1938,8 @@ async function renderLivePage(main){
 function renderDashboard(main){
   const allGroups = DB.getGroups();
   const groups = currentTeacher.isAdmin ? allGroups : allGroups.filter(g=>g.teacherId===currentTeacher.id);
-  const students = DB.getUsers().filter(u=>u.role==='student');
+  const myGroupIds = new Set(groups.map(g=>g.id));
+  const students = DB.getUsers().filter(u=>u.role==='student' && myGroupIds.has(u.groupId));
   const totalLessons = UNITS.reduce((a,u)=>a+u.lessons.length,0);
   
   let avgProg = 0;
@@ -2013,8 +2017,14 @@ function groupCard(g){
 }
 
 function renderStudentsPage(main){
-  const students = DB.getUsers().filter(u=>u.role==='student');
-  const groups = DB.getGroups();
+  const allGroups = DB.getGroups();
+  // Admin barcha guruhlarni, oddiy ustoz faqat o'zinikini ko'radi
+  const myGroups = currentTeacher.isAdmin
+    ? allGroups
+    : allGroups.filter(g=>g.teacherId===currentTeacher.id);
+  const myGroupIds = new Set(myGroups.map(g=>g.id));
+  const students = DB.getUsers().filter(u=>u.role==='student' && myGroupIds.has(u.groupId));
+  const groups = allGroups;
   const totalLessons = UNITS.reduce((a,u)=>a+u.lessons.length,0);
   
   const rows = students.map(s=>{
